@@ -16,12 +16,14 @@ function App() {
   const handleAnalyze = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setLoading(true);
     setShowMenu(false);
     const formData = new FormData();
     formData.append("image", file);
 
     try {
+      // نرسل الطلب للسيرفر الداخلي (مخفي) وليس لجوجل مباشرة
       const res = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
@@ -29,7 +31,7 @@ function App() {
       const data = await res.json();
       setAnalysis(data.result || data.error);
     } catch (err) {
-      setAnalysis("حدث خطأ في الاتصال بالسيرفر.");
+      setAnalysis("حدث خطأ في الاتصال بالسيرفر الصيدلاني.");
     } finally {
       setLoading(false);
     }
@@ -37,43 +39,58 @@ function App() {
 
   return (
     <div
-      className="min-h-screen bg-[#0f1115] text-white p-4 flex flex-col"
+      className="min-h-screen bg-[#0f1115] text-white p-4 flex flex-col font-sans"
       dir="rtl"
     >
       <header className="flex items-center gap-3 border-b border-gray-800 pb-4 mb-6">
-        <div className="bg-teal-500 p-2 rounded-xl shadow-lg">
-          <Sun size={24} />
+        <div className="bg-teal-500 p-2.5 rounded-xl shadow-[0_0_20px_rgba(20,184,166,0.4)]">
+          <Sun size={28} className="text-white" />
         </div>
-        <h1 className="text-xl font-bold italic">صيدلية شفاء الشمس</h1>
+        <div>
+          <h1 className="text-xl font-bold">صيدلية شفاء الشمس</h1>
+          <p className="text-[10px] text-teal-400 font-bold tracking-widest">
+            SHIFAA AL-SHAMS PHARMACY
+          </p>
+        </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
-        {loading ? (
-          <div className="flex flex-col items-center py-10 gap-4">
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {loading && (
+          <div className="flex flex-col items-center gap-4 py-10">
             <Loader2 className="animate-spin text-teal-500" size={40} />
-            <p className="text-teal-400">جاري التحليل السري...</p>
-          </div>
-        ) : analysis ? (
-          <div className="bg-[#1a1d23] p-6 rounded-3xl border-r-4 border-teal-500 animate-in fade-in">
-            <div className="flex items-center gap-2 mb-4 text-teal-400 font-bold border-b border-gray-800 pb-2">
-              <CheckCircle2 size={18} /> <span>النتائج:</span>
-            </div>
-            <p className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">
-              {analysis}
-            </p>
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 mt-20 italic">
-            ارفع صورة الروشتة للبدء ☀️
+            <p className="text-teal-400 font-medium">جاري قراءة الروشتة...</p>
           </div>
         )}
-      </main>
 
-      <footer className="relative mt-4">
+        {analysis ? (
+          <div className="bg-[#1a1d23] p-6 rounded-3xl border-r-4 border-teal-500 shadow-2xl animate-in slide-in-from-bottom-4">
+            <div className="flex items-center gap-2 mb-4 text-teal-400 font-bold border-b border-gray-800 pb-3">
+              <CheckCircle2 size={20} />
+              <span>نتائج التحليل الذكي:</span>
+            </div>
+            <div className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">
+              {analysis}
+            </div>
+          </div>
+        ) : (
+          !loading && (
+            <div className="bg-[#1a1d23] p-6 rounded-3xl border border-gray-800 text-center">
+              <p className="text-gray-400 text-sm">
+                ارفع صورة الروشتة لبدء التحليل الآمن.
+              </p>
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="relative mt-6">
         {showMenu && (
-          <div className="absolute bottom-20 right-0 flex gap-4 animate-in zoom-in">
-            <label className="cursor-pointer bg-[#1a1d23] p-4 rounded-2xl border border-gray-700">
-              <Camera className="text-teal-400" />
+          <div className="absolute bottom-24 right-0 flex gap-4 z-50 animate-in zoom-in">
+            <label className="flex flex-col items-center gap-2 cursor-pointer">
+              <div className="bg-[#1a1d23] p-5 rounded-2xl text-teal-400 border border-gray-700 hover:bg-teal-600 transition-all shadow-xl">
+                <Camera size={30} />
+              </div>
+              <span className="text-[11px] font-bold">كاميرا</span>
               <input
                 type="file"
                 accept="image/*"
@@ -82,8 +99,11 @@ function App() {
                 onChange={handleAnalyze}
               />
             </label>
-            <label className="cursor-pointer bg-[#1a1d23] p-4 rounded-2xl border border-gray-700">
-              <ImageIcon className="text-teal-400" />
+            <label className="flex flex-col items-center gap-2 cursor-pointer">
+              <div className="bg-[#1a1d23] p-5 rounded-2xl text-teal-400 border border-gray-700 hover:bg-teal-600 transition-all shadow-xl">
+                <ImageIcon size={30} />
+              </div>
+              <span className="text-[11px] font-bold">استوديو</span>
               <input
                 type="file"
                 accept="image/*"
@@ -93,21 +113,30 @@ function App() {
             </label>
           </div>
         )}
-        <div className="flex bg-[#1a1d23] rounded-2xl p-2 border border-gray-800 items-center">
+
+        <div className="flex items-center gap-4 bg-[#1a1d23] rounded-2xl p-3 border border-gray-800">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="bg-teal-500 p-4 rounded-xl active:scale-90 transition-all"
+            className="bg-teal-500 p-4 rounded-xl text-white shadow-lg active:scale-95 transition-all"
           >
-            <Plus size={24} />
+            <Plus
+              size={28}
+              className={
+                showMenu
+                  ? "rotate-45 transition-transform"
+                  : "transition-transform"
+              }
+            />
           </button>
           <input
             type="text"
-            placeholder="اكتب هنا..."
-            className="bg-transparent flex-1 px-4 outline-none text-right"
+            placeholder="اطلب معلومة عن دواء..."
+            className="flex-1 bg-transparent outline-none text-sm text-white text-right"
           />
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
+
 export default App;
