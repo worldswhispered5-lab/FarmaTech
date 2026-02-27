@@ -1,9 +1,11 @@
 import type { Express } from "express";
-import { type Server, createServer } from "http";
+import { type Server } from "http";
 import { upload, genAI } from "./routes";
 
-
-export function registerRoutes(app: Express): Server {
+export async function registerRoutes(
+    httpServer: Server,
+    app: Express
+): Promise<Server> {
     app.post("/api/analyze", upload.single("image"), async (req, res) => {
         try {
             if (!req.file)
@@ -26,5 +28,5 @@ export function registerRoutes(app: Express): Server {
         }
     });
 
-    return createServer(app);
+    return httpServer;
 }

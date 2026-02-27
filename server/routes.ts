@@ -1,15 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { GoogleGenerativeAI } from "@google-cloud/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import multer from "multer";
 
-const upload = multer({
+export const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 // استدعاء المفتاح من الخزنة السرية
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export function registerRoutes(app: Express): Server {
   app.post("/api/analyze", upload.single("image"), async (req, res) => {
