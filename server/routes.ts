@@ -1,26 +1,29 @@
 import type { Express } from "express";
-import { type Server } from "http";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createServer, type Server } from "http";
+import { GoogleGenerativeAI } from "@google-cloud/generative-ai";
 import multer from "multer";
 
-export const upload = multer({
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// استدعاء المفتاح من الخزنة السرية
-export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// إعداد المفتاح السري
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
+export function registerRoutes(app: Express): Server {
   app.post("/api/analyze", upload.single("image"), async (req, res) => {
     try {
-      if (!req.file)
-        return res.status(400).json({ error: "يرجى رفع صورة الروشتة" });
+      if (!req.file) {
+        return res.status(400).json({ error: "يرجى اختيار صورة أولاً" });
+      }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      // تحديد الموديل
+      // سنستخدم "gemini-1.5-flash"
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+      });
+
       const imagePart = {
         inlineData: {
           data: req.file.buffer.toString("base64"),
@@ -29,14 +32,21 @@ export async function registerRoutes(
       };
 
       const prompt =
-        "أنت مساعد صيدلي في صيدلية شفاء الشمس. حلل هذه الروشتة واستخرج الأدوية والجرعات بالعربية.";
-      const result = await model.generateContent([prompt, imagePart]);
+        "أنت مساعد صيدلي في صيدلية شفاء الشمس. حلل هذه الروشتة بوضوح.";
 
-      res.json({ result: result.response.text() });
+      // إرسال الطلب
+      const result = await model.generateContent([prompt, imagePart]);
+      const response = await result.response;
+
+      res.json({ result: response.text() });
     } catch (error: any) {
-      res.status(500).json({ error: "خطأ في السيرفر: " + error.message });
+      console.error("AI Error:", error);
+      // إذا استمر الخطأ، سنعرض رسالة تفصيلية
+      res.status(500).json({
+        error: "فشل في التحليل. تأكد من تحديث المكتبة في الـ Shell.",
+      });
     }
   });
 
-  return httpServer;
+  return createServer(app);
 }
