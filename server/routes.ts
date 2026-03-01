@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { GoogleGenerativeAI } from "@google-cloud/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import multer from "multer";
 
 const upload = multer({
