@@ -22,7 +22,7 @@ export function registerRoutes(app: Express): Server {
       // سنستخدم "gemini-1.5-flash"
       const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
-      });
+      }, { apiVersion: 'v1beta' });
 
       const imagePart = {
         inlineData: {
