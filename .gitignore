@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+.env
+.env.local
+.env.*.local
+*.log
+*_log.txt
+server_start_log.txt
+server_log.txt
+server_execution_log.txt

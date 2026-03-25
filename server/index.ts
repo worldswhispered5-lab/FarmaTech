@@ -1,3 +1,4 @@
+import "dotenv/config"; // Restart trigger - 2026-03-21
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -63,6 +64,8 @@ app.use((req, res, next) => {
 
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
+  } else if (process.env.STRICT_BACKEND) {
+    console.log("STRICT BACKEND MODE: Skipping Integrated Vite.");
   } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
@@ -73,7 +76,6 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);
