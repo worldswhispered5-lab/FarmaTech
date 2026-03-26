@@ -177,6 +177,7 @@ export default function Home() {
             setExpiryWarning(profile.expiryWarning);
             setSubscriptionTier(profile.subscriptionTier || "free");
             setSubscriptionExpiresAt(profile.subscriptionExpiresAt || null);
+            console.log("[FarmaTech] Profile Loaded, Version:", profile.serverVersion);
             localStorage.setItem(`credits_${session.user.id}`, (profile.credits ?? 0).toString());
             localStorage.setItem(`max_${session.user.id}`, (profile.maxCredits ?? 10).toString());
           }

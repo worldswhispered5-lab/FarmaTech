@@ -63,7 +63,8 @@ export function registerRoutes(app: Express): Server {
           credits: Math.min(profile.credits ?? 0, 10)
         });
       }
-      return res.json({ ...profile, expiryWarning, serverVersion: "v10.1-fixed" });
+      console.log(`[FarmaTech v10.2-final] Profile retrieved for user ${user.id}`);
+      return res.json({ ...profile, expiryWarning, serverVersion: "v10.2-final" });
     } catch (error: any) {
       console.error("[Profile Error]", error);
       res.status(500).json({ error: error.message });
