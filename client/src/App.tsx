@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.15-final-polish");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.16-color-sync");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -138,7 +138,7 @@ export default function Home() {
   const syncRoute = useCallback(() => {
     const path = window.location.pathname;
     const cleanPath = path.endsWith('/') ? path.slice(0, -1) : path;
-    
+
     if (cleanPath === "/about") setPublicView("about");
     else if (cleanPath === "/contact") setPublicView("contact");
     else if (cleanPath === "/privacy-policy") setPublicView("privacy");
@@ -162,7 +162,7 @@ export default function Home() {
   useEffect(() => {
     syncRoute();
     window.addEventListener("popstate", syncRoute);
-    
+
     const initSession = async () => {
       try {
         const timeoutPromise = new Promise((_, reject) =>
@@ -397,7 +397,7 @@ export default function Home() {
     setIsLoading(true);
     // Safety timeout: auto-stop loading after 15 seconds to prevent getting stuck
     const loadingTimeout = setTimeout(() => setIsLoading(false), 15000);
-    
+
     setShowMenu(false);
     setShowCalc(false);
     setResult("");
@@ -463,8 +463,8 @@ export default function Home() {
           toast({
             variant: "destructive",
             title: lang === 'ar' ? "تنبيه: تم اكتشاف فحص مختبري" : "Alert: Lab Report Detected",
-            description: lang === 'ar' 
-              ? "هذا الملف يبدو كفحص مختبري. يرجى إكمال البيانات التالية لتحليله بدقة في القسم المخصص." 
+            description: lang === 'ar'
+              ? "هذا الملف يبدو كفحص مختبري. يرجى إكمال البيانات التالية لتحليله بدقة في القسم المخصص."
               : "This file appears to be a lab report. Please complete the following details to analyze it accurately in the dedicated section."
           });
           return;
@@ -477,8 +477,8 @@ export default function Home() {
           toast({
             variant: "destructive",
             title: lang === 'ar' ? "تنبيه: تم اكتشاف وصفة طبية" : "Alert: Prescription Detected",
-            description: lang === 'ar' 
-              ? "هذا الملف يبدو كوصفة طبية (روشتة). يرجى استخدامه في قسم 'تحليل الوصفة الطبية'." 
+            description: lang === 'ar'
+              ? "هذا الملف يبدو كوصفة طبية (روشتة). يرجى استخدامه في قسم 'تحليل الوصفة الطبية'."
               : "This file appears to be a medical prescription. Please use it in the 'Prescription Analysis' section."
           });
           return;
@@ -1004,8 +1004,8 @@ export default function Home() {
                             const { error } = await supabase.auth.signInWithOAuth({
                               provider: 'google',
                               options: {
-                                redirectTo: window.location.origin.includes('localhost') 
-                                  ? window.location.origin 
+                                redirectTo: window.location.origin.includes('localhost')
+                                  ? window.location.origin
                                   : "https://farmatechai.com"
                               }
                             });
@@ -1030,17 +1030,17 @@ export default function Home() {
                         {lang === 'ar' ? (
                           <>
                             بالاستمرار، أنت توافق على{" "}
-                            <span onClick={() => navigate("terms")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
+                            <span onClick={() => navigate("terms")} className="text-[#34d399] hover:text-[#5eead4] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
                             {" "}و{" "}
-                            <span onClick={() => navigate("privacy")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
+                            <span onClick={() => navigate("privacy")} className="text-[#34d399] hover:text-[#5eead4] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
                             {" "}لمنصة FarmaTech Ai.
                           </>
                         ) : (
                           <>
                             By continuing, you agree to the{" "}
-                            <span onClick={() => navigate("terms")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
+                            <span onClick={() => navigate("terms")} className="text-[#34d399] hover:text-[#5eead4] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
                             {" "}and{" "}
-                            <span onClick={() => navigate("privacy")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
+                            <span onClick={() => navigate("privacy")} className="text-[#34d399] hover:text-[#5eead4] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
                             {" "}of FarmaTech platform.
                           </>
                         )}
@@ -1704,11 +1704,11 @@ export default function Home() {
                     }}
                     disabled={isSubscribeLoading !== null}
                     className={`w-full h-14 rounded-2xl font-black text-sm md:text-base transition-all active:scale-95 mb-10
-                      ${plan.highlight 
+                      ${plan.highlight
                         ? 'bg-[#34d399] hover:bg-[#2fb986] text-[#001c24] shadow-[0_0_35px_rgba(52,211,153,0.45)]'
-                        : (theme === 'dark' 
-                            ? 'bg-transparent border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white' 
-                            : 'bg-transparent border border-emerald-200 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800')}`}
+                        : (theme === 'dark'
+                          ? 'bg-transparent border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white'
+                          : 'bg-transparent border border-emerald-200 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800')}`}
                   >
                     {isSubscribeLoading === plan.id ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : plan.cta}
                   </Button>
@@ -2182,7 +2182,7 @@ export default function Home() {
                   size="sm"
                   className={`rounded-xl flex items-center gap-2 border-dashed ${theme === 'dark' ? 'border-slate-700 text-slate-400 hover:bg-white/5' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                   onClick={() => {
-                    const postText = `📝 منشور صيدلاني توعوي:\n\n${selectedEntry.content}\n\n#صيدلية #شفاء_AI #نصيحة_طبية`;
+                    const postText = `📝 منشور صيدلاني توعوي:\n\n${selectedEntry.content}\n\n##farmatechai#FarmaTechAI#farmatechai.com#فارمتك_AI #نصيحة_طبية#صيدلية`;
                     shareContent(t(selectedEntry.title as any) || selectedEntry.title, postText, selectedEntry.image);
                   }}
                 >
