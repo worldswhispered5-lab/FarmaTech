@@ -81,10 +81,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.5-final" 
+        serverVersion: "v10.6-ultimate" 
       };
       
-      console.log(`[FarmaTech v10.5-final] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.6-ultimate] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

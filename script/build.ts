@@ -39,13 +39,6 @@ async function buildAll() {
   await viteBuild();
 
   console.log("building server...");
-  const pkg = JSON.parse(await readFile("package.json", "utf-8"));
-  const allDeps = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
-  ];
-  const externals = allDeps.filter((dep) => !allowlist.includes(dep));
-
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
@@ -55,9 +48,10 @@ async function buildAll() {
     define: {
       "process.env.NODE_ENV": '"production"',
     },
-    minify: true,
-    external: externals,
+    minify: false, // Turn off minify for easier debugging if it still crashes
+    external: [], // NO EXTERNALS - BUNDLE EVERYTHING
     logLevel: "info",
+    mainFields: ["module", "main"],
   });
 }
 
