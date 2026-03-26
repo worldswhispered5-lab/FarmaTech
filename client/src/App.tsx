@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.11-wait");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.14-routing");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -135,7 +135,34 @@ export default function Home() {
 
   const t = (key: keyof typeof translations.ar) => (translations[lang] as any)[key] || key;
 
+  const syncRoute = useCallback(() => {
+    const path = window.location.pathname;
+    const cleanPath = path.endsWith('/') ? path.slice(0, -1) : path;
+    
+    if (cleanPath === "/about") setPublicView("about");
+    else if (cleanPath === "/contact") setPublicView("contact");
+    else if (cleanPath === "/privacy-policy") setPublicView("privacy");
+    else if (cleanPath === "/terms-of-use") setPublicView("terms");
+    else setPublicView("landing");
+  }, []);
+
+  const navigate = (to: "landing" | "about" | "contact" | "privacy" | "terms") => {
+    const paths = {
+      landing: "/",
+      about: "/about",
+      contact: "/contact",
+      privacy: "/privacy-policy",
+      terms: "/terms-of-use"
+    };
+    window.history.pushState({}, "", paths[to]);
+    setPublicView(to);
+    window.scrollTo(0, 0);
+  };
+
   useEffect(() => {
+    syncRoute();
+    window.addEventListener("popstate", syncRoute);
+    
     const initSession = async () => {
       try {
         const timeoutPromise = new Promise((_, reject) =>
@@ -684,16 +711,16 @@ export default function Home() {
   // --- Login Screen ---
   if (!isLoggedIn) {
     if (publicView === "terms") {
-      return <TermsOfUse onBack={() => setPublicView("landing")} theme={theme} lang={lang} />;
+      return <TermsOfUse onBack={() => navigate("landing")} theme={theme} lang={lang} />;
     }
     if (publicView === "privacy") {
-      return <PrivacyPolicy onBack={() => setPublicView("landing")} theme={theme} lang={lang} />;
+      return <PrivacyPolicy onBack={() => navigate("landing")} theme={theme} lang={lang} />;
     }
     if (publicView === "contact") {
-      return <ContactPage onBack={() => setPublicView("landing")} theme={theme} lang={lang} API_BASE_URL={API_BASE_URL} />;
+      return <ContactPage onBack={() => navigate("landing")} theme={theme} lang={lang} API_BASE_URL={API_BASE_URL} />;
     }
     if (publicView === "about") {
-      return <AboutPage onBack={() => setPublicView("landing")} theme={theme} lang={lang} />;
+      return <AboutPage onBack={() => navigate("landing")} theme={theme} lang={lang} />;
     }
     const features = [
       {
@@ -1149,10 +1176,10 @@ export default function Home() {
 
             <div className="flex flex-wrap justify-center gap-6 mb-10 text-sm font-medium text-slate-500">
               <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#06b6d4] transition-colors">{t('home')}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setPublicView("about"); }} className="hover:text-[#06b6d4] transition-colors">{t('aboutUs')}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setPublicView("contact"); }} className="hover:text-[#06b6d4] transition-colors">{t('contactUs')}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setPublicView("privacy"); }} className="hover:text-[#06b6d4] transition-colors">{t('privacyPolicy')}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setPublicView("terms"); }} className="hover:text-[#06b6d4] transition-colors">{t('termsOfUse')}</a>
+              <a href="/about" onClick={(e) => { e.preventDefault(); navigate("about"); }} className="hover:text-[#06b6d4] transition-colors">{t('aboutUs')}</a>
+              <a href="/contact" onClick={(e) => { e.preventDefault(); navigate("contact"); }} className="hover:text-[#06b6d4] transition-colors">{t('contactUs')}</a>
+              <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigate("privacy"); }} className="hover:text-[#06b6d4] transition-colors">{t('privacyPolicy')}</a>
+              <a href="/terms-of-use" onClick={(e) => { e.preventDefault(); navigate("terms"); }} className="hover:text-[#06b6d4] transition-colors">{t('termsOfUse')}</a>
             </div>
 
             <div className="text-center text-xs text-slate-600 font-medium w-full">
