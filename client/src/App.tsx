@@ -98,6 +98,20 @@ export default function Home() {
   const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [currentAnalysisImage, setCurrentAnalysisImage] = useState<string | null>(null);
+
+  const resetAnalysis = () => {
+    setResult("");
+    setCurrentAnalysisImage(null);
+    setCurrentHistoryId(null);
+    setIsLoading(false);
+    setChatInput("");
+    setLabPatientData({
+      age: "",
+      gender: "male",
+      isPregnant: false,
+      clinicalNotes: ""
+    });
+  };
   const [menuType, setMenuType] = useState<"prescription" | "medicine" | "lab">("prescription");
   const [showLabForm, setShowLabForm] = useState(false);
   const [labPatientData, setLabPatientData] = useState({
@@ -494,8 +508,11 @@ export default function Home() {
 
     // Fallback to Gemini AI if free search fails or if it's an image/calc
     try {
-      if (currentHistoryId) {
-        formData.append("historyId", currentHistoryId);
+      // Force NEW record for every new image scan to prevent cross-tool data mixing
+      const historyIdFromReq = type === "image" ? null : currentHistoryId;
+      
+      if (historyIdFromReq) {
+        formData.append("historyId", historyIdFromReq);
       }
 
       const res = await fetch(`${API_BASE_URL}/api/analyze`, {
@@ -1416,32 +1433,32 @@ export default function Home() {
                       {
                         label: t('prescriptionAnalysis'),
                         icon: <FileSignature className="w-10 h-10" />,
-                        onClick: () => { setMenuType("prescription"); setShowMenu(true); },
+                        onClick: () => { resetAnalysis(); setMenuType("prescription"); setShowMenu(true); },
                       },
                       {
                         label: t('labReportAnalysis'),
                         icon: <Activity className="w-10 h-10" />,
-                        onClick: () => { setMenuType("lab"); setShowLabForm(true); },
+                        onClick: () => { resetAnalysis(); setMenuType("lab"); setShowLabForm(true); },
                       },
                       {
                         label: t('medicineScan'),
                         icon: <ScanBarcode className="w-8 h-8" />,
-                        onClick: () => { setMenuType("medicine"); setShowMenu(true); }
+                        onClick: () => { resetAnalysis(); setMenuType("medicine"); setShowMenu(true); }
                       },
                       {
                         label: t('drugInteractions'),
                         icon: <FlaskConical className="w-8 h-8" />,
-                        onClick: () => { setChatInput(lang === 'ar' ? "التفاعلات الدوائية لـ: " : "Drug interactions for: "); inputRef.current?.focus(); }
+                        onClick: () => { resetAnalysis(); setChatInput(lang === 'ar' ? "التفاعلات الدوائية لـ: " : "Drug interactions for: "); inputRef.current?.focus(); }
                       },
                       {
                         label: t('doseCalculator'),
                         icon: <Calculator className="w-8 h-8" />,
-                        onClick: () => setShowCalc(true)
+                        onClick: () => { resetAnalysis(); setShowCalc(true); }
                       },
                       {
                         label: t('smartAdvice'),
                         icon: <Sparkles className="w-8 h-8" />,
-                        onClick: () => { setChatInput(lang === 'ar' ? "أحتاج إلى نصيحة طبية بخصوص: " : "I need medical advice regarding: "); inputRef.current?.focus(); }
+                        onClick: () => { resetAnalysis(); setChatInput(lang === 'ar' ? "أحتاج إلى نصيحة طبية بخصوص: " : "I need medical advice regarding: "); inputRef.current?.focus(); }
                       },
                     ].map((card, idx) => (
                       <button
@@ -1474,10 +1491,7 @@ export default function Home() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {
-                          setResult("");
-                          setCurrentAnalysisImage(null);
-                        }}
+                        onClick={resetAnalysis}
                         className={`rounded-full h-8 w-8 transition-all hover:rotate-90 duration-300 ${theme === 'dark' ? 'text-slate-400 hover:bg-white/10 hover:text-rose-400' : 'text-slate-500 hover:bg-slate-100 hover:text-rose-600'}`}
                       >
                         <X className="w-5 h-5" />
@@ -1840,28 +1854,54 @@ export default function Home() {
 
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                 {history.length > 0 ? (
-                  history.map((entry, idx) => (
-                    <div
-                      key={entry.id || idx}
-                      onClick={() => {
-                        setSelectedEntry(entry);
-                        setResult("");
-                      }}
-                      className={`p-4 rounded-2xl border cursor-pointer transition-all active:scale-[0.98] ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200 shadow-sm hover:shadow-md'}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-bold ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {entry.date || "غير محدد"}
-                        </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${theme === 'dark' ? 'bg-teal-900/30 text-teal-400' : 'bg-teal-50 text-teal-700'}`}>
-                          {entry.id ? t('archived') : t('local')}
-                        </span>
+                  history.map((entry, idx) => {
+                    let pressTimeout: any = null;
+                    const handleStart = () => {
+                      pressTimeout = setTimeout(() => {
+                        if (confirm(lang === 'ar' ? "هل تريد حذف هذا السجل؟" : "Delete this entry?")) {
+                          fetch(`${API_BASE_URL}/api/history/${entry.id}`, {
+                            method: 'DELETE',
+                            headers: { "Authorization": `Bearer ${session.access_token}` }
+                          }).then(res => {
+                            if (res.ok) {
+                              setHistory(prev => prev.filter(h => h.id !== entry.id));
+                              toast({ title: lang === 'ar' ? "تم الحذف" : "Deleted" });
+                            }
+                          });
+                        }
+                      }, 800); // 800ms for long press
+                    };
+                    const handleEnd = () => {
+                      if (pressTimeout) clearTimeout(pressTimeout);
+                    };
+
+                    return (
+                      <div
+                        key={entry.id || idx}
+                        onClick={() => {
+                          setSelectedEntry(entry);
+                          setResult("");
+                        }}
+                        onMouseDown={handleStart}
+                        onMouseUp={handleEnd}
+                        onTouchStart={handleStart}
+                        onTouchEnd={handleEnd}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all active:scale-[0.98] ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200 shadow-sm hover:shadow-md'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-bold ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {entry.date || "غير محدد"}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${theme === 'dark' ? 'bg-teal-900/30 text-teal-400' : 'bg-teal-50 text-teal-700'}`}>
+                            {entry.id ? t('archived') : t('local')}
+                          </span>
+                        </div>
+                        <p className={`text-sm mt-2 line-clamp-1 font-medium ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {t(entry.title as any) || entry.query || t('aiAnalysis')}
+                        </p>
                       </div>
-                      <p className={`text-sm mt-2 line-clamp-1 font-medium ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                        {t(entry.title as any) || entry.query || t('aiAnalysis')}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full opacity-30">
                     <HistoryIcon className="w-12 h-12 mb-2" />
@@ -1879,7 +1919,7 @@ export default function Home() {
             <div className={`absolute -inset-1 blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem] ${theme === 'dark' ? 'bg-teal-500' : 'bg-teal-300'}`}></div>
             <div className={`relative flex items-center p-2 rounded-[2rem] border shadow-2xl transition-all duration-500 ${theme === 'dark' ? 'bg-[#151c28] border-slate-700' : 'bg-white border-slate-100'}`}>
               <button
-                onClick={() => { setMenuType("prescription"); setShowMenu(true); }}
+                onClick={() => { resetAnalysis(); setMenuType("prescription"); setShowMenu(true); }}
                 className={`p-3 rounded-full transition-all active:scale-90 ${theme === 'dark' ? 'text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100'}`}
               >
                 <Plus className="w-6 h-6" />

@@ -113,6 +113,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // DELETE specific history entry
+  app.delete("/api/history/:id", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) return res.status(401).json({ error: "Missing authorization header" });
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) return res.status(401).json({ error: "Invalid session" });
+
+      const historyId = req.params.id;
+      // Optional: check if the history item belongs to the user
+      const historyItems = await storage.getHistory(user.id);
+      if (!historyItems.some(h => h.id === historyId)) {
+        return res.status(403).json({ error: "Unauthorized or not found" });
+      }
+
+      await storage.deleteHistory(historyId);
+      return res.json({ success: true, message: "History entry deleted" });
+    } catch (error: any) {
+      console.error("[History Delete Error]", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // FREE Search (FDA & Beauty Facts)
   app.post("/api/search-free", async (req, res) => {
     try {
@@ -320,6 +344,9 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/analyze", upload.single("image"), async (req, res) => {
     try {
       const token = req.body.accessCode;
+      const promptText = req.body.prompt; 
+      console.log(`[Analyze Request] Prompt: "${promptText?.substring(0, 50)}...", File: ${!!req.file}, Lang: ${req.body.lang}`);
+      
       if (!token) return res.status(401).json({ error: "لم يتم تسجيل الدخول." });
 
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -329,11 +356,9 @@ export function registerRoutes(app: Express): Server {
       const userCredits = profile?.credits ?? 10;
       if (userCredits <= 0) return res.status(403).json({ error: "رصيدك نفذ. يرجى ترقية الباقة." });
 
-      const promptText = req.body.prompt; 
       const history = req.body.history ? JSON.parse(req.body.history) : [];
       const lang = req.body.lang || "ar";
 
-      // --- GLOBAL DUPLICATE DETECTION (AI CACHING) ---
       let imageHash: string | undefined;
       if (req.file) {
         imageHash = crypto.createHash('md5').update(req.file.buffer).digest('hex');
@@ -346,36 +371,49 @@ export function registerRoutes(app: Express): Server {
             result: myExisting.content, 
             historyId: myExisting.id, 
             cached: true,
-            model: "cached" 
+            model: "cached",
+            credits: userCredits,
+            maxCredits: profile?.maxCredits ?? 10
           });
         }
 
         // 2. Check if ANY user has processed this image before (save AI cost)
         const globalExisting = await storage.getGlobalHistoryByHash(imageHash);
         if (globalExisting) {
-          console.log(`[Cache-Global] Found global match for hash: ${imageHash}. Deducting credit.`);
-          
-          // Deduct credit for viewing the global cache
-          const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
-          
-          // Create a new history entry for the CURRENT user using the CACHED content
-          const created = await storage.createHistory({
-            userId: user.id,
-            title: globalExisting.title,
-            type: globalExisting.type,
-            content: globalExisting.content,
-            image: req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}` : undefined,
-            imageHash: imageHash
-          });
+          // Determine mode from prompt/file to ensure cache consistency
+          const isMedicineScanCheck = promptText && (promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
+          const isLabAnalysisCheck = promptText && (promptText.includes("التقرير المختبري") || promptText.includes("laboratory report"));
 
-          return res.json({ 
-            result: globalExisting.content, 
-            historyId: created.id, 
-            cached: true,
-            model: "global-cache",
-            credits: updatedProfile.credits,
-            maxCredits: updatedProfile.maxCredits
-          });
+          // Verify if the cached mode matches the current request mode to avoid data mixing
+          const cachedIsLab = globalExisting.type === "lab" || (globalExisting.content && globalExisting.content.includes("### تحليل الفحص المختبري"));
+          
+          if (cachedIsLab === !!isLabAnalysisCheck) {
+            console.log(`[Cache-Global] Match found for hash ${imageHash}. Mode consistency verified.`);
+            
+            // Deduct credit for viewing the global cache
+            const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
+
+            // Create a new history entry for the CURRENT user using the CACHED content
+            const created = await storage.createHistory({
+              userId: user.id,
+              title: globalExisting.title,
+              type: globalExisting.type,
+              content: globalExisting.content,
+              image: `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+              imageHash: imageHash
+            });
+
+            return res.json({ 
+              result: globalExisting.content, 
+              historyId: created.id, 
+              cached: true,
+              model: "global-cache",
+              credits: updatedProfile.credits,
+              maxCredits: updatedProfile.maxCredits
+            });
+          } else {
+            console.log(`[Cache-Global] Hash match found but MODE MISMATCH (CachedLab: ${cachedIsLab}, ReqLab: ${!!isLabAnalysisCheck}). Bypassing cache.`);
+          }
         }
       }
 
@@ -537,8 +575,16 @@ export function registerRoutes(app: Express): Server {
 
       const historyIdFromReq = req.body.historyId || null;
       let finalHistoryId;
+      
+      // Mandatory: update imageHash if a new image was provided, even on updates
       if (historyIdFromReq) {
-        const updated = await storage.updateHistory(historyIdFromReq, { content: finalResult });
+        const updated = await storage.updateHistory(historyIdFromReq, { 
+          content: finalResult,
+          title: historyTitle,
+          type: historyType,
+          image: req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}` : undefined,
+          imageHash: imageHash // CRITICAL: Update the hash to current image
+        });
         finalHistoryId = updated.id;
       } else {
         const created = await storage.createHistory({

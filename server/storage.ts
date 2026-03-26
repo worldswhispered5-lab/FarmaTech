@@ -32,6 +32,8 @@ export interface IStorage {
   cleanupOldHistory(userId: string): Promise<void>;
   createHistory(entry: InsertHistoryEntry & { userId: string }): Promise<HistoryEntry>;
   updateHistory(id: string, updates: Partial<InsertHistoryEntry>): Promise<HistoryEntry>;
+  deleteHistory(id: string): Promise<void>;
+
 
   // Subscription Methods
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
@@ -307,6 +309,18 @@ export class SupabaseStorage implements IStorage {
       imageHash: data.image_hash,
       createdAt: data.created_at
     };
+  }
+
+  async deleteHistory(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('history')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("[Storage Error] deleteHistory failed:", error);
+      throw error;
+    }
   }
 
   async createSubscription(sub: InsertSubscription): Promise<Subscription> {
