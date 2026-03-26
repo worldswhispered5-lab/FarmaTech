@@ -82,10 +82,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.8-ultimate" 
+        serverVersion: "v10.9-realtime" 
       };
       
-      console.log(`[FarmaTech v10.8-ultimate] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.9-realtime] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -527,8 +527,14 @@ export function registerRoutes(app: Express): Server {
         );
       }
 
-      await storage.updateProfile(user.id, { credits: userCredits - 1 });
-      return res.json({ result: finalResult, historyId: finalHistoryId, model: response.model });
+      const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
+      return res.json({ 
+        result: finalResult, 
+        historyId: finalHistoryId, 
+        model: response.model,
+        credits: updatedProfile.credits,
+        maxCredits: updatedProfile.maxCredits
+      });
 
     } catch (error: any) {
       console.error("[Analyze Error]", error);

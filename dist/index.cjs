@@ -54928,9 +54928,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.8-ultimate"
+        serverVersion: "v10.9-realtime"
       };
-      console.log(`[FarmaTech v10.8-ultimate] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.9-realtime] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -55321,8 +55321,14 @@ ${resultText}`;
           (err) => console.error("[Cleanup Error] Failed to cleanup after analysis:", err)
         );
       }
-      await storage.updateProfile(user.id, { credits: userCredits - 1 });
-      return res.json({ result: finalResult, historyId: finalHistoryId, model: response.model });
+      const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
+      return res.json({
+        result: finalResult,
+        historyId: finalHistoryId,
+        model: response.model,
+        credits: updatedProfile.credits,
+        maxCredits: updatedProfile.maxCredits
+      });
     } catch (error) {
       console.error("[Analyze Error]", error);
       res.status(500).json({ error: error.message || "\u062A\u0639\u0630\u0631 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A." });

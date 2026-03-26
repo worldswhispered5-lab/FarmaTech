@@ -449,17 +449,17 @@ export default function Home() {
         if (data.historyId) setCurrentHistoryId(data.historyId);
         setChatInput("");
 
-        // Refresh credits and history
-        const profRes = await fetch(`${API_BASE_URL}/api/profile`, {
-          headers: { "Authorization": `Bearer ${session.access_token}` }
-        });
-        const prof = await profRes.json();
-        if (profRes.ok) {
-          setTotalCredits(prof.credits);
-          setMaxLimit(prof.maxCredits || 10);
-          setExpiryWarning(prof.expiryWarning);
+        // Immediate Credit Update from Analysis Response
+        if (data.credits !== undefined) {
+          setTotalCredits(data.credits);
+          localStorage.setItem(`credits_${session?.user?.id}`, data.credits.toString());
+          if (data.maxCredits !== undefined) {
+            setMaxLimit(data.maxCredits);
+            localStorage.setItem(`max_${session?.user?.id}`, data.maxCredits.toString());
+          }
         }
 
+        // Refresh history
         const hRes = await fetch(`${API_BASE_URL}/api/history`, {
           headers: { "Authorization": `Bearer ${session.access_token}` }
         });
