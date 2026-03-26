@@ -333,18 +333,48 @@ export function registerRoutes(app: Express): Server {
       const history = req.body.history ? JSON.parse(req.body.history) : [];
       const lang = req.body.lang || "ar";
 
-      // --- DUPLICATE DETECTION (IMAGE HASHING) ---
+      // --- GLOBAL DUPLICATE DETECTION (AI CACHING) ---
       let imageHash: string | undefined;
       if (req.file) {
         imageHash = crypto.createHash('md5').update(req.file.buffer).digest('hex');
-        const existing = await storage.getHistoryByHash(user.id, imageHash);
-        if (existing) {
-          console.log(`[Cache] Found duplicate analysis for hash: ${imageHash}`);
+        
+        // 1. Check if the CURRENT user already has this (save duplication)
+        const myExisting = await storage.getHistoryByHash(user.id, imageHash);
+        if (myExisting) {
+          console.log(`[Cache-Local] User ${user.id} reused their own image: ${imageHash}`);
           return res.json({ 
-            result: existing.content, 
-            historyId: existing.id, 
+            result: myExisting.content, 
+            historyId: myExisting.id, 
             cached: true,
             model: "cached" 
+          });
+        }
+
+        // 2. Check if ANY user has processed this image before (save AI cost)
+        const globalExisting = await storage.getGlobalHistoryByHash(imageHash);
+        if (globalExisting) {
+          console.log(`[Cache-Global] Found global match for hash: ${imageHash}. Deducting credit.`);
+          
+          // Deduct credit for viewing the global cache
+          const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
+          
+          // Create a new history entry for the CURRENT user using the CACHED content
+          const created = await storage.createHistory({
+            userId: user.id,
+            title: globalExisting.title,
+            type: globalExisting.type,
+            content: globalExisting.content,
+            image: req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}` : undefined,
+            imageHash: imageHash
+          });
+
+          return res.json({ 
+            result: globalExisting.content, 
+            historyId: created.id, 
+            cached: true,
+            model: "global-cache",
+            credits: updatedProfile.credits,
+            maxCredits: updatedProfile.maxCredits
           });
         }
       }

@@ -28,6 +28,7 @@ export interface IStorage {
   // History Methods
   getHistory(userId: string): Promise<HistoryEntry[]>;
   getHistoryByHash(userId: string, hash: string): Promise<HistoryEntry | undefined>;
+  getGlobalHistoryByHash(hash: string): Promise<HistoryEntry | undefined>;
   cleanupOldHistory(userId: string): Promise<void>;
   createHistory(entry: InsertHistoryEntry & { userId: string }): Promise<HistoryEntry>;
   updateHistory(id: string, updates: Partial<InsertHistoryEntry>): Promise<HistoryEntry>;
@@ -198,6 +199,28 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('user_id', userId)
       .eq('image_hash', hash)
+      .maybeSingle();
+    
+    if (error || !data) return undefined;
+    
+    return {
+      id: data.id,
+      userId: data.user_id,
+      title: data.title,
+      type: data.type,
+      content: data.content,
+      image: data.image,
+      imageHash: data.image_hash,
+      createdAt: data.created_at
+    };
+  }
+
+  async getGlobalHistoryByHash(hash: string): Promise<HistoryEntry | undefined> {
+    const { data, error } = await supabase
+      .from('history')
+      .select('*')
+      .eq('image_hash', hash)
+      .limit(1)
       .maybeSingle();
     
     if (error || !data) return undefined;
