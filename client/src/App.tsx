@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.18-compression");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.19-speed-boost");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -398,7 +398,7 @@ export default function Home() {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const maxDim = 1200;
+        const maxDim = 1000;
         
         if (width > height && width > maxDim) {
           height *= maxDim / width;
@@ -420,7 +420,7 @@ export default function Home() {
           URL.revokeObjectURL(img.src);
           if (blob) resolve(blob);
           else reject(new Error("Compression failed"));
-        }, 'image/jpeg', 0.7);
+        }, 'image/jpeg', 0.6);
       };
       img.onerror = () => {
         URL.revokeObjectURL(img.src);
@@ -1628,6 +1628,25 @@ export default function Home() {
                     <MessageSquare className="w-6 h-6" />
                   </div>
                   <span className="text-lg">{t('techSupport')}</span>
+                </div>
+                <ChevronLeft className={`w-6 h-6 opacity-30 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+              </button>
+
+              <button
+                onClick={() => {
+                  supabase.auth.signOut().then(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.replace("/");
+                  });
+                }}
+                className={`h-20 rounded-3xl flex items-center justify-between px-6 font-extrabold transition-all active:scale-[0.98] ${theme === 'dark' ? 'bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20' : 'bg-red-50 border border-red-100 text-red-600 hover:bg-red-100 shadow-sm'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 rounded-xl bg-red-500/20 text-red-500">
+                    <LogOut className="w-6 h-6" />
+                  </div>
+                  <span className="text-lg">{t('logout')}</span>
                 </div>
                 <ChevronLeft className={`w-6 h-6 opacity-30 ${lang === 'ar' ? 'rotate-180' : ''}`} />
               </button>

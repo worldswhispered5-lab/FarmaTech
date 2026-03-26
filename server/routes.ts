@@ -82,10 +82,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.18-compression" 
+        serverVersion: "v10.19-speed-boost" 
       };
       
-      console.log(`[FarmaTech v10.18-compression] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.19-speed-boost] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -596,11 +596,17 @@ async function fetchWithRetry(
 
     while (currentRetries >= 0) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers,
           body: JSON.stringify(currentBody),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));

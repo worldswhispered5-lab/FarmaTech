@@ -54928,9 +54928,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.18-compression"
+        serverVersion: "v10.19-speed-boost"
       };
-      console.log(`[FarmaTech v10.18-compression] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.19-speed-boost] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -55378,11 +55378,15 @@ async function fetchWithRetry(modelChain, headers, body, retriesPerModel = 3) {
     const currentBody = { ...body, model };
     while (currentRetries >= 0) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5e3);
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers,
-          body: JSON.stringify(currentBody)
+          body: JSON.stringify(currentBody),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData?.error?.message || `HTTP error! status: ${response.status}`);
