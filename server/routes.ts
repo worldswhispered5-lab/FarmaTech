@@ -82,10 +82,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.9-realtime" 
+        serverVersion: "v10.10-mobile-fix" 
       };
       
-      console.log(`[FarmaTech v10.9-realtime] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.10-mobile-fix] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

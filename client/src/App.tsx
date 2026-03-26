@@ -61,9 +61,14 @@ import { translations } from "./lib/translations";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://wgndikqowpwamfykxqul.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_Wvj4_zuM-cIoMHW2MkCxKg_36e6pIYe";
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("[FarmaTech] Supabase configuration missing! Check environment variables.");
+}
+
+export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -964,7 +969,9 @@ export default function Home() {
                             const { error } = await supabase.auth.signInWithOAuth({
                               provider: 'google',
                               options: {
-                                redirectTo: import.meta.env.VITE_SITE_URL || window.location.origin
+                                redirectTo: window.location.origin.includes('localhost') 
+                                  ? window.location.origin 
+                                  : "https://farmatechai.com"
                               }
                             });
                             if (error) toast({ variant: "destructive", title: t('loginError'), description: error.message });
