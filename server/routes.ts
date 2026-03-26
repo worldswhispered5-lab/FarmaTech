@@ -82,10 +82,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.20-multi-acc" 
+        serverVersion: "v10.21-credits-fix" 
       };
       
-      console.log(`[FarmaTech v10.20-multi-acc] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.21-credits-fix] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -180,10 +180,10 @@ export function registerRoutes(app: Express): Server {
 
       // Calculate add-on credits: Total - 10 free base
       const additions: Record<string, number> = {
-        starter: 120,
-        pro_monthly: 290,
-        pro: 2090,
-        enterprises: 4490
+        starter: 130,
+        pro_monthly: 300,
+        pro: 2100,
+        enterprises: 4500
       };
 
       const creditsToAdd = additions[planId] || 0;
@@ -259,10 +259,10 @@ export function registerRoutes(app: Express): Server {
 
       // 3. Simulate Successful payment & Profile update
       const additions: Record<string, number> = {
-        starter: 120,
-        pro_monthly: 290,
-        pro: 2090,
-        enterprises: 4490
+        starter: 130,
+        pro_monthly: 300,
+        pro: 2100,
+        enterprises: 4500
       };
 
       const creditsToAdd = additions[planId] || 0;

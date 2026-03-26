@@ -54928,9 +54928,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.20-multi-acc"
+        serverVersion: "v10.21-credits-fix"
       };
-      console.log(`[FarmaTech v10.20-multi-acc] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.21-credits-fix] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -55017,10 +55017,10 @@ Description: ${p.description || "N/A"}` : `\u062A\u0645 \u0627\u0644\u0639\u062B
       const profile = await storage.getProfile(user.id);
       if (!profile) return res.status(404).json({ error: "Profile not found" });
       const additions = {
-        starter: 120,
-        pro_monthly: 290,
-        pro: 2090,
-        enterprises: 4490
+        starter: 130,
+        pro_monthly: 300,
+        pro: 2100,
+        enterprises: 4500
       };
       const creditsToAdd = additions[planId] || 0;
       const currentCredits = profile.credits || 0;
@@ -55078,10 +55078,10 @@ Description: ${p.description || "N/A"}` : `\u062A\u0645 \u0627\u0644\u0639\u062B
       });
       console.log(`[Payment Gateway Mock] Processing ${amount} via ${paymentMethod} for user ${user.id}`);
       const additions = {
-        starter: 120,
-        pro_monthly: 290,
-        pro: 2090,
-        enterprises: 4490
+        starter: 130,
+        pro_monthly: 300,
+        pro: 2100,
+        enterprises: 4500
       };
       const creditsToAdd = additions[planId] || 0;
       const currentCredits = profile.credits || 0;

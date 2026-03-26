@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.20-multi-acc");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.21-credits-fix");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
