@@ -359,8 +359,8 @@ export function registerRoutes(app: Express): Server {
       const history = req.body.history ? JSON.parse(req.body.history) : [];
       const lang = req.body.lang || "ar";
 
-      const isMedicineScan = promptText && (promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
-      const isLabAnalysis = promptText && (promptText.includes("التقرير المختبري") || promptText.includes("laboratory report"));
+      const isMedicineScan = promptText && (promptText.includes("تعرف على هذا الدواء") || promptText.includes("Identify this medicine") || promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
+      const isLabAnalysis = promptText && (promptText.includes("نتائج هذا التقرير المختبري") || promptText.includes("laboratory report") || promptText.includes("التقرير المختبري"));
       const isPrescription = !isMedicineScan && !isLabAnalysis && req.file && !promptText?.includes("احسب الجرعة لـ") && !promptText?.includes("التفاعلات الدوائية لـ");
       const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
       const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
@@ -477,14 +477,17 @@ export function registerRoutes(app: Express): Server {
           لا تذكر أي مقدمات أو ترحيب في نص الرد (سيتم إضافته تلقائياً).`;
         } else if (isMedicineScan) {
           systemInstruction = `أنت صيدلي خبير متخصص في التعرف على الأدوية من صور العبوات. 
-          مهمتك الأولى هي تحديد اسم الدواء ونوعه من شكل العلبة أو التصميم أو الكتابة عليها، حتى لو لم يظهر الباركود.
-          يجب أن يتضمن ردك بصورة أساسية:
-          1. الاسم التجاري والاسم العلمي.
-          2. المكونات الفعالة والجرعة.
-          3. دواعي الاستعمال والفوائد الطبية.
-          4. طريقة الاستخدام والنصائح الصيدلانية.
-          بالإضافة إلى ذلك، استخرج الباركود (Barcode) أو رقم الوجبة (Batch Number) فقط إذا كانا واضحين تماماً؛ لا تطل الحديث عن غيابهما إذا لم يظهرا.
-          قاعدة صارمة: ارفض تحليل الروشتات الطبية ووجه المستخدم للقسم المختص. الإجابة بالعربي حصراً.`;
+          يجب أن تكون الإجابة باللغة العربية حصراً.
+          1. استخدم دائماً العنوان الرئيسي "### مسح علبة / باركود" في البداية.
+          2. استخدم العنوان "### قراءة الصورة" للقسم الأول من البيانات.
+          3. حدد اسم الدواء ونوعه من شكل العلبة أو التصميم أو الكتابة عليها، حتى لو لم يظهر الباركود.
+          4. يجب أن يتضمن ردك بصورة أساسية:
+             - الاسم التجاري والاسم العلمي.
+             - المكونات الفعالة والجرعة.
+             - دواعي الاستعمال والفوائد الطبية.
+             - طريقة الاستخدام والنصائح الصيدلانية.
+          5. استخرج الباركود (Barcode) أو رقم الوجبة (Batch Number) فقط إذا كانا واضحين تماماً.
+          قاعدة صارمة: لا تذكر أي تفاصيل عن الروشتات ولا تستخدم مصطلح "روشتة" هنا.`;
         } else if (isDoseCalc) {
           systemInstruction = "أنت صيدلي سريري متخصص. يجب أن تكون الإجابة باللغة العربية حصراً. احسب الجرعة الدقيقة بناءً على الوزن والعمر المذكورين. اذكر خطوات الحساب، الجرعة النهائية (بالمجم والمل إذا كان شراباً)، والجرعة اليومية القصوى. اذكر الأعراض الجانبية الشائعة.";
         } else if (isInteractions) {
