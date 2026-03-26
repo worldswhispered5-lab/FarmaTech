@@ -20,10 +20,18 @@ export function registerRoutes(app: Express): Server {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Missing authorization header" });
       const token = authHeader.replace("Bearer ", "");
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) return res.status(401).json({ error: "Invalid session" });
+      
+      const { data: authData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authData?.user) {
+        console.error("[Profile Error] Auth failed:", authError);
+        return res.status(401).json({ error: "Invalid session" });
+      }
 
-      let profile = await storage.getProfile(user.id);
+      const user = authData.user;
+      let profile = await storage.getProfile(user.id).catch(e => {
+        console.error("[Profile Error] getProfile failed:", e);
+        return null;
+      });
       
       let expiryWarning = null;
       if (profile && profile.subscriptionExpiresAt) {
@@ -31,21 +39,15 @@ export function registerRoutes(app: Express): Server {
         const now = new Date();
         
         if (expiresAt < now) {
-          // EXPIRED: Reset to 0 credits
           profile = await storage.updateProfile(user.id, {
             credits: 0,
             maxCredits: 0,
             subscriptionTier: 'free',
             subscriptionExpiresAt: undefined
-          });
-          expiryWarning = null; 
+          }).catch(e => profile); // fallback to old profile if update fails
         } else {
-          // Check for 3-day warning
-          const diffTime = expiresAt.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          if (diffDays <= 3) {
-            expiryWarning = `باقي ${diffDays} أيام وينتهي اشتراكك`;
-          }
+          const diffDays = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 3) expiryWarning = `باقي ${diffDays} أيام وينتهي اشتراكك`;
         }
       }
 
@@ -55,19 +57,28 @@ export function registerRoutes(app: Express): Server {
           credits: 10, 
           maxCredits: 10, 
           subscriptionTier: 'free' 
+        }).catch(e => {
+          console.error("[Profile Error] Initial create failed:", e);
+          return { id: user.id, email: user.email, credits: 10, maxCredits: 10, subscriptionTier: 'free' } as any;
         });
       } else if (profile.subscriptionTier === 'free' && (profile.maxCredits ?? 10) > 10) {
-        // AUTO-FIX: Enforce 10 token limit for free users who were previously at 25
         profile = await storage.updateProfile(user.id, {
           maxCredits: 10,
           credits: Math.min(profile.credits ?? 0, 10)
-        });
+        }).catch(e => profile);
       }
-      console.log(`[FarmaTech v10.2-final] Profile retrieved for user ${user.id}`);
-      return res.json({ ...profile, expiryWarning, serverVersion: "v10.2-final" });
+
+      const response = { 
+        ...(profile || {}), 
+        expiryWarning, 
+        serverVersion: "v10.3-final" 
+      };
+      
+      console.log(`[FarmaTech v10.3-final] Success for ${user.id}`);
+      return res.json(response);
     } catch (error: any) {
-      console.error("[Profile Error]", error);
-      res.status(500).json({ error: error.message });
+      console.error("[Profile Error] UNEXPECTED CRASH:", error);
+      res.status(500).json({ error: "An unexpected server error occurred.", details: error.message });
     }
   });
 
