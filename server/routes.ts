@@ -14,6 +14,16 @@ const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_Wv
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export function registerRoutes(app: Express): Server {
+  // Diagnostic health check
+  app.get("/api/ping", (_req, res) => {
+    res.json({ 
+      status: "ok", 
+      time: new Date().toISOString(), 
+      env: process.env.NODE_ENV,
+      version: "v10.4-ping"
+    });
+  });
+
   // GET User Profile (Credits & Tier)
   app.get("/api/profile", async (req, res) => {
     try {
@@ -71,10 +81,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.3-final" 
+        serverVersion: "v10.4-ping" 
       };
       
-      console.log(`[FarmaTech v10.3-final] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.4-ping] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

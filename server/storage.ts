@@ -3,8 +3,16 @@ import { type User, type InsertUser, type Product, type InsertProduct, type Prof
 import { createClient } from "@supabase/supabase-js";
 
 // Database Configuration
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://wgndikqowpwamfykxqul.supabase.co";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseUrl = process.env['VITE_SUPABASE_URL'] || "https://wgndikqowpwamfykxqul.supabase.co";
+const supabaseKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['VITE_SUPABASE_ANON_KEY'] || "";
+
+console.log("[FarmaTech] Initializing Supabase with URL:", supabaseUrl);
+if (process.env['SUPABASE_SERVICE_ROLE_KEY']) {
+  console.log("[FarmaTech] Using SERVICE_ROLE_KEY (By-pass enabled)");
+} else {
+  console.warn("[FarmaTech] WARNING: Using ANON_KEY (RLS enforced)");
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface IStorage {
