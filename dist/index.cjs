@@ -54927,9 +54927,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.6-ultimate"
+        serverVersion: "v10.7-final"
       };
-      console.log(`[FarmaTech v10.6-ultimate] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.7-final] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);
@@ -55459,9 +55459,9 @@ app.use((err, _req, res, next) => {
   }
   return res.status(status).json({ message });
 });
-if (true) {
+if (!process.env.VERCEL) {
   serveStatic(app);
-} else {
+} else if (false) {
   (async () => {
     const { setupVite } = await null;
     await setupVite(server, app);
