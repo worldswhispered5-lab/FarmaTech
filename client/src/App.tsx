@@ -477,8 +477,9 @@ export default function Home() {
         setResult(`⚠️ ${errorMsg}`);
         setChatInput("");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setResult(`⚠️ ${lang === 'ar' ? 'فشل الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.' : 'Failed to connect to AI. Please try again.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -1244,8 +1245,14 @@ export default function Home() {
                 <div className={`h-px w-full my-1 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100'}`}></div>
                 <button
                   onClick={async () => {
-                    await supabase.auth.signOut();
-                    window.location.reload();
+                    try {
+                      await supabase.auth.signOut();
+                    } catch (e) {
+                      console.error("Signout error", e);
+                    } finally {
+                      localStorage.clear(); // Clear all stale state
+                      window.location.href = "/";
+                    }
                   }}
                   className={`w-full text-left px-4 py-3 flex items-center justify-start gap-3 transition-colors font-medium ${theme === 'dark' ? 'text-red-400 hover:bg-red-500/10' : 'text-red-600 hover:bg-red-50'}`}
                 >
