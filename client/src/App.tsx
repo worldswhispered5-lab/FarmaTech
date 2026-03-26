@@ -820,7 +820,8 @@ export default function Home() {
         period: t('planStarterPeriod'),
         desc: t('planStarterDesc'),
         features: t('planStarterFeatures') as string[],
-        buttonProps: { text: lang === 'ar' ? "اشترك في Starter" : "Subscribe to Starter", primary: false }
+        buttonProps: { text: lang === 'ar' ? "اشترك في Starter" : "Subscribe to Starter", primary: false },
+        isComingSoon: true
       },
       {
         id: "pro_monthly",
@@ -830,7 +831,8 @@ export default function Home() {
         desc: t('planProDesc'),
         features: t('planProFeatures') as string[],
         buttonProps: { text: lang === 'ar' ? "اشترك في Pro" : "Subscribe to Pro", primary: true },
-        badge: lang === 'ar' ? "الأكثر مبيعاً" : "Best Seller"
+        badge: lang === 'ar' ? "الأكثر مبيعاً" : "Best Seller",
+        isComingSoon: true
       },
       {
         id: "pro",
@@ -840,6 +842,7 @@ export default function Home() {
         desc: t('planProfessionalDesc'),
         features: t('planProfessionalFeatures') as string[],
         buttonProps: { text: lang === 'ar' ? "اشترك في الاحترافي" : "Subscribe Professional", primary: false },
+        isComingSoon: true
       },
       {
         id: "enterprises",
@@ -848,7 +851,8 @@ export default function Home() {
         period: t('planEnterprisesPeriod'),
         desc: t('planEnterprisesDesc'),
         features: t('planEnterprisesFeatures') as string[],
-        buttonProps: { text: lang === 'ar' ? "انضم للمؤسسات" : "Join Enterprises", primary: false }
+        buttonProps: { text: lang === 'ar' ? "انضم للمؤسسات" : "Join Enterprises", primary: false },
+        isComingSoon: true
       }
     ];
 
@@ -1136,6 +1140,7 @@ export default function Home() {
                   <div className="mb-4">
                     <span className="text-4xl font-black text-emerald-400">{plan.price}</span>
                     {plan.price !== "0" && <span className={`text-sm ml-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>/ {plan.period}</span>}
+                    {plan.isComingSoon && <span className="block mt-1 text-xs font-bold text-amber-500 uppercase tracking-widest">{t('comingSoon')}</span>}
                   </div>
                   <p className={`text-sm mb-8 flex-grow leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>{plan.desc}</p>
 
@@ -1150,8 +1155,10 @@ export default function Home() {
 
                   <Button
                     variant={plan.buttonProps.primary ? "default" : "outline"}
-                    className={`w-full rounded-xl font-bold h-12 ${plan.buttonProps.primary ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-900 shadow-lg shadow-emerald-500/25' : theme === 'dark' ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}
+                    disabled={plan.isComingSoon}
+                    className={`w-full rounded-xl font-bold h-12 ${plan.buttonProps.primary ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-900 shadow-lg shadow-emerald-500/25' : theme === 'dark' ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'} ${plan.isComingSoon ? 'opacity-50 grayscale' : ''}`}
                     onClick={() => {
+                      if (plan.isComingSoon) return;
                       toast({
                         title: lang === 'ar' ? "يرجى تسجيل الدخول" : "Please Login",
                         description: lang === 'ar' ? "قم بتسجيل الدخول أولاً للتمكن من الاشتراك في الباقات." : "Sign in first to subscribe to plans."
@@ -1159,7 +1166,7 @@ export default function Home() {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   >
-                    {plan.buttonProps.text}
+                    {plan.isComingSoon ? t('comingSoon') : plan.buttonProps.text}
                   </Button>
                 </div>
               ))}
@@ -1704,7 +1711,8 @@ export default function Home() {
                   features: t('planStarterFeatures'),
                   color: "blue",
                   cta: lang === 'ar' ? "اشترك في Starter" : "Subscribe to Starter",
-                  neon: "shadow-[0_0_15px_rgba(59,130,246,0.05)] border-slate-800"
+                  neon: "shadow-[0_0_15px_rgba(59,130,246,0.05)] border-slate-800",
+                  comingSoon: true
                 },
                 {
                   id: "pro_monthly",
@@ -1717,7 +1725,8 @@ export default function Home() {
                   highlight: true,
                   badge: lang === 'ar' ? "الأكثر مبيعاً" : "Best Seller",
                   cta: lang === 'ar' ? "اشترك في Pro" : "Subscribe to Pro",
-                  neon: "shadow-[0_0_40px_rgba(52,211,153,0.3)] border-[#34d399]/50"
+                  neon: "shadow-[0_0_40px_rgba(52,211,153,0.3)] border-[#34d399]/50",
+                  comingSoon: true
                 },
                 {
                   id: "pro",
@@ -1729,7 +1738,8 @@ export default function Home() {
                   color: "slate",
                   highlight: false,
                   cta: lang === 'ar' ? "اشترك في الاحترافي" : "Subscribe Professional",
-                  neon: "shadow-[0_0_15px_rgba(16,185,129,0.05)] border-slate-800"
+                  neon: "shadow-[0_0_15px_rgba(16,185,129,0.05)] border-slate-800",
+                  comingSoon: true
                 },
                 {
                   id: "enterprises",
@@ -1740,7 +1750,8 @@ export default function Home() {
                   features: t('planEnterprisesFeatures'),
                   color: "amber",
                   cta: lang === 'ar' ? "انضم للمؤسسات" : "Join Enterprises",
-                  neon: "shadow-[0_0_20px_rgba(245,158,11,0.1)] border-amber-500/20"
+                  neon: "shadow-[0_0_20px_rgba(245,158,11,0.1)] border-amber-500/20",
+                  comingSoon: true
                 }
               ].map((plan: any, idx) => (
                 <div
@@ -1762,6 +1773,7 @@ export default function Home() {
                   <div className="mb-4">
                     <span className={`text-4xl md:text-5xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{plan.price}</span>
                     {plan.period && <span className="text-[11px] opacity-40 font-bold block mt-2 text-center">{plan.period}</span>}
+                    {plan.comingSoon && <span className="block mt-2 text-xs font-bold text-amber-500 uppercase tracking-widest">{t('comingSoon')}</span>}
                   </div>
 
                   <p className={`text-[12px] font-medium leading-[1.6] px-1 min-h-[50px] mb-8 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -1770,21 +1782,24 @@ export default function Home() {
 
                   <Button
                     onClick={() => {
+                      if (plan.comingSoon) return;
                       if (plan.id === 'free') {
                         setView('main');
                       } else {
                         handleSubscribe(plan.id);
                       }
                     }}
-                    disabled={isSubscribeLoading !== null}
+                    disabled={isSubscribeLoading !== null || plan.comingSoon}
                     className={`w-full h-14 rounded-2xl font-black text-sm md:text-base transition-all active:scale-95 mb-10
-                      ${plan.highlight
+                      ${plan.highlight && !plan.comingSoon
                         ? 'bg-[#34d399] hover:bg-[#2fb986] text-[#001c24] shadow-[0_0_35px_rgba(52,211,153,0.45)]'
-                        : (theme === 'dark'
-                          ? 'bg-transparent border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white'
-                          : 'bg-transparent border border-emerald-200 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800')}`}
+                        : plan.comingSoon
+                          ? 'bg-slate-800 text-slate-500 border-none cursor-not-allowed opacity-50'
+                          : (theme === 'dark'
+                            ? 'bg-transparent border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white'
+                            : 'bg-transparent border border-emerald-200 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800')}`}
                   >
-                    {isSubscribeLoading === plan.id ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : plan.cta}
+                    {isSubscribeLoading === plan.id ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : (plan.comingSoon ? t('comingSoon') : plan.cta)}
                   </Button>
 
                   <div className="space-y-4 w-full text-right mt-auto" dir="rtl">

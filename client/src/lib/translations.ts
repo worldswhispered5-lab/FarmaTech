@@ -80,6 +80,7 @@ export const translations = {
     clinicalNotes: "ملاحظات سريرية",
     clinicalNotesPlaceholder: "مثال: مرض مزمن، وراثي، أو سليم...",
     proceedToUpload: "الانتقال لتحميل الصورة",
+    comingSoon: "قريباً",
 
     // About Page
     aboutHeroTitle: "الذكاء الاصطناعي.بمفهوم صيدلاني جديد.",
@@ -490,5 +491,6 @@ export const translations = {
     clinicalNotes: "Clinical Notes",
     clinicalNotesPlaceholder: "Example: Chronic disease, genetic, or healthy...",
     proceedToUpload: "Proceed to Upload",
+    comingSoon: "Coming Soon",
   }
 };
