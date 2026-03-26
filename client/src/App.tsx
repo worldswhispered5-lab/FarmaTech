@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.21-credits-fix");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.22-social");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -1503,7 +1503,7 @@ export default function Home() {
                               size="sm"
                               className={`rounded-xl flex items-center gap-2 border-dashed ${theme === 'dark' ? 'border-slate-700 text-slate-400 hover:bg-white/5' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                               onClick={() => {
-                                const postText = `📝 منشور صيدلاني توعوي:\n\n${result}\n\n#صيدلية #شفاء_AI #نصيحة_طبية`;
+                                const postText = `📝 منشور صيدلاني توعوي:\n\n${result}\n\n#farmatechai #FarmaTechAI #farmatechai.com #فارمتك_AI #نصيحة_طبية #صيدلية`;
                                 shareContent(t('analysisResult'), postText, currentAnalysisImage);
                               }}
                             >
@@ -2256,7 +2256,7 @@ export default function Home() {
                   size="sm"
                   className={`rounded-xl flex items-center gap-2 border-dashed ${theme === 'dark' ? 'border-slate-700 text-slate-400 hover:bg-white/5' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                   onClick={() => {
-                    const postText = `📝 منشور صيدلاني توعوي:\n\n${selectedEntry.content}\n\n##farmatechai#FarmaTechAI#farmatechai.com#فارمتك_AI #نصيحة_طبية#صيدلية`;
+                    const postText = `📝 منشور صيدلاني توعوي:\n\n${selectedEntry.content}\n\n#farmatechai #FarmaTechAI #farmatechai.com #فارمتك_AI #نصيحة_طبية #صيدلية`;
                     shareContent(t(selectedEntry.title as any) || selectedEntry.title, postText, selectedEntry.image);
                   }}
                 >
