@@ -54928,9 +54928,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.19-speed-boost"
+        serverVersion: "v10.20-multi-acc"
       };
-      console.log(`[FarmaTech v10.19-speed-boost] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.20-multi-acc] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

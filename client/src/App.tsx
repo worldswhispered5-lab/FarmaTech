@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.19-speed-boost");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.20-multi-acc");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -243,7 +243,7 @@ export default function Home() {
     });
 
     return () => subscription.unsubscribe();
-  }, [session]);
+  }, []);
 
   const handleSendSupport = async () => {
     if (!supportMessage.trim()) return;
@@ -1056,7 +1056,10 @@ export default function Home() {
                             const { error } = await supabase.auth.signInWithOAuth({
                               provider: 'google',
                               options: {
-                                redirectTo: window.location.origin
+                                redirectTo: window.location.origin,
+                                queryParams: {
+                                  prompt: 'select_account'
+                                }
                               }
                             });
                             if (error) {
@@ -1346,15 +1349,13 @@ export default function Home() {
                 </button>
                 <div className={`h-px w-full my-1 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100'}`}></div>
                 <button
-                  onClick={async () => {
-                    try {
-                      await supabase.auth.signOut();
-                    } catch (e) {
-                      console.error("Signout error", e);
-                    } finally {
-                      localStorage.clear(); // Clear all stale state
-                      window.location.href = "/";
-                    }
+                  onClick={() => {
+                    setShowSettingsMenu(false);
+                    supabase.auth.signOut().then(() => {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.replace("/");
+                    });
                   }}
                   className={`w-full text-left px-4 py-3 flex items-center justify-start gap-3 transition-colors font-medium ${theme === 'dark' ? 'text-red-400 hover:bg-red-500/10' : 'text-red-600 hover:bg-red-50'}`}
                 >
