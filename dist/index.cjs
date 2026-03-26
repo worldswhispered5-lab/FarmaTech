@@ -54928,9 +54928,9 @@ function registerRoutes(app2) {
       const response = {
         ...profile || {},
         expiryWarning,
-        serverVersion: "v10.16-color-sync"
+        serverVersion: "v10.17-auth-debug"
       };
-      console.log(`[FarmaTech v10.16-color-sync] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.17-auth-debug] Success for ${user.id}`);
       return res.json(response);
     } catch (error) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.16-color-sync");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.17-auth-debug");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -1000,17 +1000,23 @@ export default function Home() {
                       <Button
                         className="w-full h-14 rounded-2xl font-bold text-base flex items-center justify-center gap-3 bg-white text-slate-900 hover:bg-slate-100 transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)] group"
                         onClick={async () => {
+                          console.log("[FarmaTech] Google Sign-in Clicked. Origin:", window.location.origin);
                           try {
+                            if (!supabase || !supabase.auth) {
+                              throw new Error("Supabase is not initialized properly");
+                            }
                             const { error } = await supabase.auth.signInWithOAuth({
                               provider: 'google',
                               options: {
-                                redirectTo: window.location.origin.includes('localhost')
-                                  ? window.location.origin
-                                  : "https://farmatechai.com"
+                                redirectTo: window.location.origin
                               }
                             });
-                            if (error) toast({ variant: "destructive", title: t('loginError'), description: error.message });
+                            if (error) {
+                              console.error("[FarmaTech] OAuth Error:", error);
+                              toast({ variant: "destructive", title: t('loginError'), description: error.message });
+                            }
                           } catch (e: any) {
+                            console.error("[FarmaTech] Auth Exception:", e);
                             toast({ variant: "destructive", title: t('loginError'), description: e.message });
                           }
                         }}
