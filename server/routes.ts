@@ -359,6 +359,16 @@ export function registerRoutes(app: Express): Server {
       const history = req.body.history ? JSON.parse(req.body.history) : [];
       const lang = req.body.lang || "ar";
 
+      const isMedicineScan = promptText && (promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
+      const isLabAnalysis = promptText && (promptText.includes("التقرير المختبري") || promptText.includes("laboratory report"));
+      const isPrescription = !isMedicineScan && !isLabAnalysis && req.file && !promptText?.includes("احسب الجرعة لـ") && !promptText?.includes("التفاعلات الدوائية لـ");
+      const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
+      const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
+      const isSymptoms = promptText && (promptText.includes("أشعر بـ") || promptText.includes("I feel"));
+
+      const currentReqType = isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat")))));
+
+      // --- GLOBAL DUPLICATE DETECTION (AI CACHING) ---
       let imageHash: string | undefined;
       if (req.file) {
         imageHash = crypto.createHash('md5').update(req.file.buffer).digest('hex');
@@ -366,29 +376,26 @@ export function registerRoutes(app: Express): Server {
         // 1. Check if the CURRENT user already has this (save duplication)
         const myExisting = await storage.getHistoryByHash(user.id, imageHash);
         if (myExisting) {
-          console.log(`[Cache-Local] User ${user.id} reused their own image: ${imageHash}`);
-          return res.json({ 
-            result: myExisting.content, 
-            historyId: myExisting.id, 
-            cached: true,
-            model: "cached",
-            credits: userCredits,
-            maxCredits: profile?.maxCredits ?? 10
-          });
+          // Even for local cache, ensure type consistency
+          if (myExisting.type === currentReqType) {
+            console.log(`[Cache-Local] User ${user.id} reused their own image: ${imageHash}. Type: ${currentReqType}`);
+            return res.json({ 
+              result: myExisting.content, 
+              historyId: myExisting.id, 
+              cached: true,
+              model: "cached",
+              credits: userCredits,
+              maxCredits: profile?.maxCredits ?? 10
+            });
+          }
         }
 
         // 2. Check if ANY user has processed this image before (save AI cost)
         const globalExisting = await storage.getGlobalHistoryByHash(imageHash);
         if (globalExisting) {
-          // Determine mode from prompt/file to ensure cache consistency
-          const isMedicineScanCheck = promptText && (promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
-          const isLabAnalysisCheck = promptText && (promptText.includes("التقرير المختبري") || promptText.includes("laboratory report"));
-
-          // Verify if the cached mode matches the current request mode to avoid data mixing
-          const cachedIsLab = globalExisting.type === "lab" || (globalExisting.content && globalExisting.content.includes("### تحليل الفحص المختبري"));
-          
-          if (cachedIsLab === !!isLabAnalysisCheck) {
-            console.log(`[Cache-Global] Match found for hash ${imageHash}. Mode consistency verified.`);
+          // STRICT TYPE GUARD: Only use cache if the tool-type matches perfectly
+          if (globalExisting.type === currentReqType) {
+            console.log(`[Cache-Global] Match found for hash ${imageHash}. Type consistency verified: ${currentReqType}`);
             
             // Deduct credit for viewing the global cache
             const updatedProfile = await storage.updateProfile(user.id, { credits: userCredits - 1 });
@@ -412,17 +419,10 @@ export function registerRoutes(app: Express): Server {
               maxCredits: updatedProfile.maxCredits
             });
           } else {
-            console.log(`[Cache-Global] Hash match found but MODE MISMATCH (CachedLab: ${cachedIsLab}, ReqLab: ${!!isLabAnalysisCheck}). Bypassing cache.`);
+            console.log(`[Cache-Global] Hash match found but TYPE MISMATCH (Cached: ${globalExisting.type}, Req: ${currentReqType}). Bypassing cache.`);
           }
         }
       }
-
-      const isMedicineScan = promptText && (promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
-      const isLabAnalysis = promptText && (promptText.includes("التقرير المختبري") || promptText.includes("laboratory report"));
-      const isPrescription = !isMedicineScan && !isLabAnalysis && req.file;
-      const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
-      const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
-      const isSymptoms = promptText && (promptText.includes("أشعر بـ") || promptText.includes("I feel"));
 
       let systemInstruction = "";
       if (lang === 'en') {
