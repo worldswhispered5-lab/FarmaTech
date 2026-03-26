@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.17-auth-debug");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.18-compression");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -390,6 +390,45 @@ export default function Home() {
     );
   };
 
+  const compressImage = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(img.src);
+          if (blob) resolve(blob);
+          else reject(new Error("Compression failed"));
+        }, 'image/jpeg', 0.7);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error("Image load failed"));
+      };
+    });
+  };
+
   const handleAction = async (
     type: "image" | "text" | "calc",
     payload?: any,
@@ -407,10 +446,19 @@ export default function Home() {
     formData.append("accessCode", session?.access_token || "");
     let displayImage = "/logo.png";
     if (type === "image") {
-      formData.append("image", payload);
+      let compressedFile = payload;
+      if (payload instanceof File) {
+        try {
+          compressedFile = await compressImage(payload);
+          console.log(`[FarmaTech] Image compressed. Original: ${payload.size}b, Compressed: ${compressedFile.size}b`);
+        } catch (e) {
+          console.warn("[FarmaTech] Compression failed, using original", e);
+        }
+      }
+      formData.append("image", compressedFile);
       displayImage = await new Promise((resolve) => {
         const reader = new FileReader();
-        reader.readAsDataURL(payload);
+        reader.readAsDataURL(compressedFile);
         reader.onload = () => resolve(reader.result as string);
       });
       setCurrentAnalysisImage(displayImage);
