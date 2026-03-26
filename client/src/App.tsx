@@ -127,7 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeVersion, setActiveVersion] = useState<string>("v10.14-routing");
+  const [activeVersion, setActiveVersion] = useState<string>("v10.15-final-polish");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -1026,8 +1026,24 @@ export default function Home() {
                     </div>
 
                     <div className="mt-8 text-center w-full relative z-10 border-t border-slate-800/50 pt-6">
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                        {t('tosPrivacy')}
+                      <p className="text-[10px] md:text-xs text-slate-500 font-medium leading-relaxed">
+                        {lang === 'ar' ? (
+                          <>
+                            بالاستمرار، أنت توافق على{" "}
+                            <span onClick={() => navigate("terms")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
+                            {" "}و{" "}
+                            <span onClick={() => navigate("privacy")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
+                            {" "}لمنصة FarmaTech Ai.
+                          </>
+                        ) : (
+                          <>
+                            By continuing, you agree to the{" "}
+                            <span onClick={() => navigate("terms")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('termsOfUse')}</span>
+                            {" "}and{" "}
+                            <span onClick={() => navigate("privacy")} className="text-[#06b6d4] hover:text-[#22d3ee] hover:underline cursor-pointer font-bold transition-colors">{t('privacyPolicy')}</span>
+                            {" "}of FarmaTech platform.
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
