@@ -71,7 +71,8 @@ export function registerRoutes(app: Express): Server {
           console.error("[Profile Error] Initial create failed:", e);
           return { id: user.id, email: user.email, credits: 10, maxCredits: 10, subscriptionTier: 'free' } as any;
         });
-      } else if (profile.subscriptionTier === 'free' && (profile.maxCredits ?? 10) > 10) {
+      } else if (profile.subscriptionTier === 'free' && ((profile.maxCredits ?? 0) > 10 || (profile.credits ?? 0) > 10)) {
+        console.log(`[FarmaTech v10.8-ultimate] Enforcing 10-token limit for ${user.id} (Current: ${profile.credits}/${profile.maxCredits})`);
         profile = await storage.updateProfile(user.id, {
           maxCredits: 10,
           credits: Math.min(profile.credits ?? 0, 10)
@@ -81,10 +82,10 @@ export function registerRoutes(app: Express): Server {
       const response = { 
         ...(profile || {}), 
         expiryWarning, 
-        serverVersion: "v10.7-final" 
+        serverVersion: "v10.8-ultimate" 
       };
       
-      console.log(`[FarmaTech v10.7-final] Success for ${user.id}`);
+      console.log(`[FarmaTech v10.8-ultimate] Success for ${user.id}`);
       return res.json(response);
     } catch (error: any) {
       console.error("[Profile Error] UNEXPECTED CRASH:", error);

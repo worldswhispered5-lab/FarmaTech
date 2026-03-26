@@ -146,7 +146,17 @@ export default function Home() {
           const savedHistory = localStorage.getItem(`history_${session.user.id}`);
           if (savedHistory) setHistory(JSON.parse(savedHistory));
           const savedCredits = localStorage.getItem(`credits_${session.user.id}`);
-          if (savedCredits) setTotalCredits(parseInt(savedCredits));
+          if (savedCredits) {
+            const credits = parseInt(savedCredits);
+            // Emergency migration for users stuck with 25 cached
+            if (credits > 10 && !localStorage.getItem(`migrated_10_v2`)) {
+              setTotalCredits(10);
+              localStorage.setItem(`credits_${session.user.id}`, "10");
+              localStorage.setItem(`migrated_10_v2`, "true");
+            } else {
+              setTotalCredits(credits);
+            }
+          }
           const savedMax = localStorage.getItem(`max_${session.user.id}`);
           if (savedMax) setMaxLimit(parseInt(savedMax));
         }
