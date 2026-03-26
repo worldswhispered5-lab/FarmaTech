@@ -124,8 +124,9 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">((localStorage.getItem("theme") as "light" | "dark") || "dark");
-  const [totalCredits, setTotalCredits] = useState<number>(0);
+  const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -192,6 +193,7 @@ export default function Home() {
             setExpiryWarning(profile.expiryWarning);
             setSubscriptionTier(profile.subscriptionTier || "free");
             setSubscriptionExpiresAt(profile.subscriptionExpiresAt || null);
+            setProfileLoaded(true);
             console.log("[FarmaTech] Profile Loaded, Version:", profile.serverVersion);
             localStorage.setItem(`credits_${session.user.id}`, (profile.credits ?? 0).toString());
             localStorage.setItem(`max_${session.user.id}`, (profile.maxCredits ?? 10).toString());
@@ -1259,7 +1261,7 @@ export default function Home() {
       <div className={`${view === 'pricing' ? 'max-w-[1400px] w-full' : 'max-w-xl'} mx-auto p-5 relative z-10 flex flex-col min-h-[calc(100vh-160px)] transition-all duration-500`}>
         {view === "main" ? (
           <div className="space-y-6 animate-in fade-in duration-700 flex-1 flex flex-col">
-            {totalCredits <= 0 ? (
+            {(profileLoaded && totalCredits <= 0) ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-6">
                 <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${theme === 'dark' ? 'bg-amber-500/10 text-amber-500' : 'bg-amber-50 text-amber-600'}`}>
                   <AlertTriangle className="w-10 h-10" />
