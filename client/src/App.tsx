@@ -127,6 +127,7 @@ export default function Home() {
   const [totalCredits, setTotalCredits] = useState<number>(10);
   const [maxLimit, setMaxLimit] = useState<number>(10);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [activeVersion, setActiveVersion] = useState<string>("v10.11-wait");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
@@ -193,6 +194,7 @@ export default function Home() {
             setExpiryWarning(profile.expiryWarning);
             setSubscriptionTier(profile.subscriptionTier || "free");
             setSubscriptionExpiresAt(profile.subscriptionExpiresAt || null);
+            setActiveVersion(profile.serverVersion || "v10.11-unknown");
             setProfileLoaded(true);
             console.log("[FarmaTech] Profile Loaded, Version:", profile.serverVersion);
             localStorage.setItem(`credits_${session.user.id}`, (profile.credits ?? 0).toString());
@@ -366,6 +368,9 @@ export default function Home() {
     payload?: any,
   ) => {
     setIsLoading(true);
+    // Safety timeout: auto-stop loading after 15 seconds to prevent getting stuck
+    const loadingTimeout = setTimeout(() => setIsLoading(false), 15000);
+    
     setShowMenu(false);
     setShowCalc(false);
     setResult("");
@@ -1450,11 +1455,11 @@ export default function Home() {
               <h3 className={`text-xl font-black mb-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 {session?.user?.email?.split('@')[0]}
               </h3>
-              <p className={`text-xs mb-6 font-medium ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                {session?.user?.email}
+              <p className={`text-[10px] mt-2 opacity-30 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                {activeVersion}
               </p>
 
-              <div className="flex flex-col items-center gap-3 mb-6">
+              <div className="flex flex-col items-center gap-3 mb-6 mt-6">
                 <div className="w-fit flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border border-dashed cursor-pointer transition-all duration-500 active:scale-95 bg-emerald-900/10 border-emerald-800/30 text-emerald-400" dir="ltr">
                   <span className="text-xs md:text-sm font-black leading-none">
                     {(totalCredits ?? 0).toLocaleString()} {t('points')}
