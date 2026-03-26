@@ -49,11 +49,10 @@ export function registerRoutes(app: Express): Server {
       }
 
       if (!profile) {
-        // Create and persist profile for new users with 25 starting credits
         profile = await storage.updateProfile(user.id, { 
           email: user.email, 
-          credits: 25, 
-          maxCredits: 25, 
+          credits: 10, 
+          maxCredits: 10, 
           subscriptionTier: 'free' 
         });
       }

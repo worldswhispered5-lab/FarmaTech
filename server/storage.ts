@@ -91,7 +91,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getProfile(id: string): Promise<Profile | undefined> {
-    const { data, error } = await supabase.from('profiles').select().eq('id', id).single();
+    const { data, error } = await supabase.from('profiles').select().eq('id', id).maybeSingle();
     if (error) throw error;
     if (!data) return undefined;
 
@@ -140,7 +140,7 @@ export class SupabaseStorage implements IStorage {
       // Create new profile with the updates
       const { data, error } = await supabase
         .from('profiles')
-        .insert({ id, ...dbUpdates, max_credits: updates.maxCredits || 25 })
+        .insert({ id, ...dbUpdates, max_credits: updates.maxCredits || 10 })
         .select('*')
         .single();
       if (error) throw error;

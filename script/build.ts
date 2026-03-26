@@ -33,7 +33,7 @@ const allowlist = [
 ];
 
 async function buildAll() {
-  // await rm("dist", { recursive: true, force: true });
+  await rm("dist", { recursive: true, force: true });
 
   console.log("building client...");
   await viteBuild();
@@ -46,7 +46,6 @@ async function buildAll() {
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-  /*
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
@@ -60,7 +59,6 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
-  */
 }
 
 buildAll().catch((err) => {

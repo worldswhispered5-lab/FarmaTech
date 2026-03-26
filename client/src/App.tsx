@@ -69,7 +69,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 
 const TIER_LIMITS: Record<string, number> = {
-  free: 25,
+  free: 10,
   starter: 150, // 125 + 25
   pro: 375,    // 350 + 25
   enterprises: 5525  // 5500 + 25
@@ -120,7 +120,7 @@ export default function Home() {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">((localStorage.getItem("theme") as "light" | "dark") || "dark");
   const [totalCredits, setTotalCredits] = useState<number>(0);
-  const [maxLimit, setMaxLimit] = useState<number>(25);
+  const [maxLimit, setMaxLimit] = useState<number>(10);
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
