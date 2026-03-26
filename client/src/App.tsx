@@ -70,9 +70,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 const TIER_LIMITS: Record<string, number> = {
   free: 10,
-  starter: 150, // 125 + 25
-  pro: 375,    // 350 + 25
-  enterprises: 5525  // 5500 + 25
+  starter: 130, // 120 + 10
+  pro: 300,    // 290 + 10
+  enterprises: 4500  // 4490 + 10
 };
 
 // Constants moved to translations.ts
@@ -173,11 +173,12 @@ export default function Home() {
           const profile = await res.json();
           if (res.ok) {
             setTotalCredits(profile.credits);
-            setMaxLimit(profile.maxCredits ?? 25);
+            setMaxLimit(profile.maxCredits ?? 10);
             setExpiryWarning(profile.expiryWarning);
             setSubscriptionTier(profile.subscriptionTier || "free");
             setSubscriptionExpiresAt(profile.subscriptionExpiresAt || null);
-            localStorage.setItem(`max_${session.user.id}`, (profile.maxCredits ?? 25).toString());
+            localStorage.setItem(`credits_${session.user.id}`, (profile.credits ?? 0).toString());
+            localStorage.setItem(`max_${session.user.id}`, (profile.maxCredits ?? 10).toString());
           }
         } catch (e) { console.error("Profile fetch failed", e); }
 
@@ -444,7 +445,7 @@ export default function Home() {
         const prof = await profRes.json();
         if (profRes.ok) {
           setTotalCredits(prof.credits);
-          setMaxLimit(prof.maxCredits || 25);
+          setMaxLimit(prof.maxCredits || 10);
           setExpiryWarning(prof.expiryWarning);
         }
 

@@ -4,7 +4,8 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT,
-    credits INTEGER DEFAULT 25,
+    credits INTEGER DEFAULT 10,
+    max_credits INTEGER DEFAULT 10,
     subscription_tier TEXT DEFAULT 'free',
     stripe_customer_id TEXT
 );

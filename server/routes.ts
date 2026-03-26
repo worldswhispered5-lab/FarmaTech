@@ -38,6 +38,7 @@ export function registerRoutes(app: Express): Server {
             subscriptionTier: 'free',
             subscriptionExpiresAt: undefined
           });
+          expiryWarning = null; 
         } else {
           // Check for 3-day warning
           const diffTime = expiresAt.getTime() - now.getTime();
@@ -54,6 +55,12 @@ export function registerRoutes(app: Express): Server {
           credits: 10, 
           maxCredits: 10, 
           subscriptionTier: 'free' 
+        });
+      } else if (profile.subscriptionTier === 'free' && (profile.maxCredits ?? 10) > 10) {
+        // AUTO-FIX: Enforce 10 token limit for free users who were previously at 25
+        profile = await storage.updateProfile(user.id, {
+          maxCredits: 10,
+          credits: Math.min(profile.credits ?? 0, 10)
         });
       }
       return res.json({ ...profile, expiryWarning });
@@ -148,17 +155,17 @@ export function registerRoutes(app: Express): Server {
       const profile = await storage.getProfile(user.id);
       if (!profile) return res.status(404).json({ error: "Profile not found" });
 
-      // Calculate add-on credits: Total - 25 free base
+      // Calculate add-on credits: Total - 10 free base
       const additions: Record<string, number> = {
-        starter: 125,
-        pro_monthly: 350,
-        pro: 2100,
-        enterprises: 5500
+        starter: 120,
+        pro_monthly: 290,
+        pro: 2090,
+        enterprises: 4490
       };
 
       const creditsToAdd = additions[planId] || 0;
       const currentCredits = profile.credits || 0;
-      const currentMax = profile.maxCredits || 25;
+      const currentMax = profile.maxCredits || 10;
 
       const newCredits = currentCredits + creditsToAdd;
       const newMax = currentMax + creditsToAdd;
@@ -229,15 +236,15 @@ export function registerRoutes(app: Express): Server {
 
       // 3. Simulate Successful payment & Profile update
       const additions: Record<string, number> = {
-        starter: 125,
-        pro_monthly: 350,
-        pro: 2100,
-        enterprises: 5500
+        starter: 120,
+        pro_monthly: 290,
+        pro: 2090,
+        enterprises: 4490
       };
 
       const creditsToAdd = additions[planId] || 0;
       const currentCredits = profile.credits || 0;
-      const currentMax = profile.maxCredits || 25;
+      const currentMax = profile.maxCredits || 10;
 
       const newCredits = currentCredits + creditsToAdd;
       const newMax = currentMax + creditsToAdd;
@@ -296,7 +303,7 @@ export function registerRoutes(app: Express): Server {
       if (authError || !user) return res.status(401).json({ error: "جلسة غير صالحة." });
 
       const profile = await storage.getProfile(user.id);
-      const userCredits = profile?.credits ?? 25;
+      const userCredits = profile?.credits ?? 10;
       if (userCredits <= 0) return res.status(403).json({ error: "رصيدك نفذ. يرجى ترقية الباقة." });
 
       const promptText = req.body.prompt; 

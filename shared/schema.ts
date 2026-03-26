@@ -26,8 +26,8 @@ export const products = pgTable("products", {
 export const profiles = pgTable("profiles", {
   id: varchar("id").primaryKey(),
   email: text("email"),
-  credits: integer("credits").default(25),
-  maxCredits: integer("max_credits").default(25),
+  credits: integer("credits").default(10),
+  maxCredits: integer("max_credits").default(10),
   subscriptionTier: text("subscription_tier").default("free"),
   subscriptionExpiresAt: text("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
