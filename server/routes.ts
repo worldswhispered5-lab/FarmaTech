@@ -63,7 +63,7 @@ export function registerRoutes(app: Express): Server {
           credits: Math.min(profile.credits ?? 0, 10)
         });
       }
-      return res.json({ ...profile, expiryWarning });
+      return res.json({ ...profile, expiryWarning, serverVersion: "v10.1-fixed" });
     } catch (error: any) {
       console.error("[Profile Error]", error);
       res.status(500).json({ error: error.message });

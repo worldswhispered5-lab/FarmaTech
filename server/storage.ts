@@ -140,7 +140,12 @@ export class SupabaseStorage implements IStorage {
       // Create new profile with the updates
       const { data, error } = await supabase
         .from('profiles')
-        .insert({ id, ...dbUpdates, max_credits: updates.maxCredits || 10 })
+        .insert({ 
+          id, 
+          ...dbUpdates, 
+          credits: dbUpdates.credits ?? 10,
+          max_credits: updates.maxCredits ?? 10 
+        })
         .select('*')
         .single();
       if (error) throw error;
