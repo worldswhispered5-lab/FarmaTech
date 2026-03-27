@@ -110,12 +110,13 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  // GET User Profile (Credits & Tier)
-  app.get("/api/profile", async (req, res) => {
+  // POST User Profile (Credits & Tier) with Fingerprinting
+  app.post("/api/profile", async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Missing authorization header" });
       const token = authHeader.replace("Bearer ", "");
+      const { fingerprint } = req.body;
       
       const { data: authData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !authData?.user) {
@@ -148,21 +149,44 @@ export function registerRoutes(app: Express): Server {
       }
 
       if (!profile) {
+        // --- Fraud Prevention System (The Shield) ---
+        let initialCredits = 10;
+        let initialMax = 10;
+
+        if (fingerprint) {
+          // Check if another profile already has THIS fingerprint and HAD credits
+          const existingDeviceProfile = await storage.getProfileByFingerprint(fingerprint);
+          if (existingDeviceProfile && existingDeviceProfile.id !== user.id) {
+            console.log(`[FarmaTech Shield] Duplicate Device Detected: ${fingerprint}. Account: ${user.id}. Preventing free tokens.`);
+            initialCredits = 0;
+            initialMax = 0;
+          }
+        }
+
         profile = await storage.updateProfile(user.id, { 
           email: user.email, 
-          credits: 10, 
-          maxCredits: 10, 
-          subscriptionTier: 'free' 
+          credits: initialCredits, 
+          maxCredits: initialMax, 
+          subscriptionTier: 'free',
+          fingerprint: fingerprint || undefined
         }).catch(e => {
           console.error("[Profile Error] Initial create failed:", e);
-          return { id: user.id, email: user.email, credits: 10, maxCredits: 10, subscriptionTier: 'free' } as any;
+          return { id: user.id, email: user.email, credits: initialCredits, maxCredits: initialMax, subscriptionTier: 'free', fingerprint } as any;
         });
-      } else if (profile.subscriptionTier === 'free' && ((profile.maxCredits ?? 0) > 10 || (profile.credits ?? 0) > 10)) {
-        console.log(`[FarmaTech v10.8-ultimate] Enforcing 10-token limit for ${user.id} (Current: ${profile.credits}/${profile.maxCredits})`);
-        profile = await storage.updateProfile(user.id, {
-          maxCredits: 10,
-          credits: Math.min(profile.credits ?? 0, 10)
-        }).catch(e => profile);
+      } else {
+        // Update fingerprint if missing
+        if (fingerprint && !profile.fingerprint) {
+          profile = await storage.updateProfile(user.id, { fingerprint }).catch(e => profile);
+        }
+
+        // Global Credit Policy Enforcement
+        if (profile.subscriptionTier === 'free' && ((profile.maxCredits ?? 0) > 10 || (profile.credits ?? 0) > 10)) {
+          console.log(`[FarmaTech v10.8-ultimate] Enforcing 10-token limit for ${user.id}`);
+          profile = await storage.updateProfile(user.id, {
+            maxCredits: 10,
+            credits: Math.min(profile.credits ?? 0, 10)
+          }).catch(e => profile);
+        }
       }
 
       const response = { 

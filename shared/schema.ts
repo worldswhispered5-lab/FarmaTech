@@ -38,6 +38,7 @@ export const profiles = pgTable("profiles", {
   subscriptionTier: text("subscription_tier").default("free"),
   subscriptionExpiresAt: text("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
+  fingerprint: text("fingerprint"),
 });
 
 export const history = pgTable("history", {

@@ -23,6 +23,7 @@ export interface IStorage {
 
   // Profile Methods
   getProfile(id: string): Promise<Profile | undefined>;
+  getProfileByFingerprint(fingerprint: string): Promise<Profile | undefined>;
   updateProfile(id: string, updates: Partial<Profile>): Promise<Profile>;
 
   // History Methods
@@ -108,6 +109,25 @@ export class SupabaseStorage implements IStorage {
       subscriptionTier: data.subscription_tier,
       subscriptionExpiresAt: data.subscription_expires_at,
       stripeCustomerId: data.stripe_customer_id,
+      fingerprint: data.fingerprint,
+    };
+  }
+
+  async getProfileByFingerprint(fingerprint: string): Promise<Profile | undefined> {
+    if (!fingerprint) return undefined;
+    const { data, error } = await supabase.from('profiles').select().eq('fingerprint', fingerprint).maybeSingle();
+    if (error) throw error;
+    if (!data) return undefined;
+
+    return {
+      id: data.id,
+      email: data.email,
+      credits: data.credits,
+      maxCredits: data.max_credits,
+      subscriptionTier: data.subscription_tier,
+      subscriptionExpiresAt: data.subscription_expires_at,
+      stripeCustomerId: data.stripe_customer_id,
+      fingerprint: data.fingerprint,
     };
   }
 
@@ -122,6 +142,7 @@ export class SupabaseStorage implements IStorage {
     if (updates.subscriptionTier !== undefined) dbUpdates.subscription_tier = updates.subscriptionTier;
     if (updates.subscriptionExpiresAt !== undefined) dbUpdates.subscription_expires_at = updates.subscriptionExpiresAt;
     if (updates.stripeCustomerId !== undefined) dbUpdates.stripe_customer_id = updates.stripeCustomerId;
+    if (updates.fingerprint !== undefined) dbUpdates.fingerprint = updates.fingerprint;
 
     if (existing) {
       const { data, error } = await supabase
@@ -139,6 +160,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionTier: data.subscription_tier,
         subscriptionExpiresAt: data.subscription_expires_at,
         stripeCustomerId: data.stripe_customer_id,
+        fingerprint: data.fingerprint,
       };
     } else {
       const { data, error } = await supabase
@@ -160,6 +182,7 @@ export class SupabaseStorage implements IStorage {
         subscriptionTier: data.subscription_tier,
         subscriptionExpiresAt: data.subscription_expires_at,
         stripeCustomerId: data.stripe_customer_id,
+        fingerprint: data.fingerprint,
       };
     }
   }

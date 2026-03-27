@@ -59,6 +59,7 @@ import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { TermsOfUse } from "./components/TermsOfUse";
 import { translations } from "./lib/translations";
 import { createClient } from "@supabase/supabase-js";
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 // Initialize Supabase Client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -146,6 +147,7 @@ export default function Home() {
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [lang, setLang] = useState<"ar" | "en">((localStorage.getItem("lang") as "ar" | "en") || "ar");
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
+  const [fingerprint, setFingerprint] = useState<string | null>(null);
 
   const t = (key: keyof typeof translations.ar) => (translations[lang] as any)[key] || key;
 
@@ -176,6 +178,19 @@ export default function Home() {
   useEffect(() => {
     syncRoute();
     window.addEventListener("popstate", syncRoute);
+
+    // Initialize Fingerprint
+    const initFingerprint = async () => {
+      try {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        setFingerprint(result.visitorId);
+        console.log("[FarmaTech] Fingerprint initialized:", result.visitorId);
+      } catch (e) {
+        console.error("Fingerprint failed", e);
+      }
+    };
+    initFingerprint();
 
     const initSession = async () => {
       try {
@@ -226,7 +241,12 @@ export default function Home() {
         // Fetch real profile from DB
         try {
           const res = await fetch(`${API_BASE_URL}/api/profile`, {
-            headers: { "Authorization": `Bearer ${session.access_token}` }
+            method: "POST", // Changed to POST to allow sending fingerprint in body
+            headers: { 
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ fingerprint })
           });
           const profile = await res.json();
           if (res.ok) {
