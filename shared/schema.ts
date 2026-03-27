@@ -1,7 +1,14 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer } from "drizzle-orm/pg-core";
+import { sql, relations } from "drizzle-orm";
+import { pgTable, text, varchar, integer, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Support for pgvector as a custom type in Drizzle
+const vector = customType<{ data: number[], driverData: string, config: { dimensions: number } }>({
+  dataType: (config) => `vector(${config?.dimensions ?? 768})`,
+  toDriver: (value) => JSON.stringify(value),
+  fromDriver: (value) => JSON.parse(value as string) as number[],
+});
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -41,6 +48,7 @@ export const history = pgTable("history", {
   content: text("content"),
   image: text("image"),
   imageHash: text("image_hash"),
+  embedding: vector("embedding", { dimensions: 768 }),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -77,6 +85,7 @@ export type User = typeof users.$inferSelect;
 export const insertHistorySchema = createInsertSchema(history).omit({
   id: true,
   createdAt: true,
+  embedding: true,
 });
 
 export type HistoryEntry = typeof history.$inferSelect;

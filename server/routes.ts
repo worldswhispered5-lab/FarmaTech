@@ -5,8 +5,64 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { createClient } from "@supabase/supabase-js";
 import { searchDrugInOpenFDA, searchCosmeticInOpenBeauty } from "./db-services";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+// AI Intelligence: Analyze Image (The heart of FarmaTech AI)
+async function analyzeImage(image: string, type: string) {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const prompt = type === "prescription" 
+    ? `تحليل روشتة طبية احترافي:
+    قم بقراءة الروشتة المرفقة واستخراج المعلومات التالية بتنسيق JSON:
+    {
+      "title": "اسم المريض أو الطبيب (إن وجد) مع تاريخ الروشتة",
+      "medicines": [
+        {
+          "name": "اسم الدواء بالإنجليزية",
+          "name_ar": "اسم الدواء بالعربية",
+          "dosage": "الجرعة المقررة (مثلاً: حبة 3 مرات يومياً)",
+          "purpose": "الغرض من الدواء (مثلاً: مسكن للآلام)"
+        }
+      ],
+      "doctor_notes": "أي ملاحظات إضافية من الطبيب",
+      "general_advice": "نصيحة عامة للمريض بناءً على الروشتة"
+    }
+    تأكد من أن النتيجة JSON صالح فقط باللغتين العربية والإنجليزية.`
+    : `تحليل دواء احترافي:
+    قم بتحليل صورة الدواء/المنتج واستخراج المعلومات التالية بتنسيق JSON:
+    {
+      "title": "اسم الدواء الرسمي بالإنجليزية والعربية",
+      "active_ingredients": "المواد الفعالة",
+      "uses": "دواعي الاستعمال الرئيسية",
+      "dosage": "الجرعة المعتادة (إخلاء مسؤولية: استشر الطبيب)",
+      "warnings": "التحذيرات والآثار الجانبية الهامة",
+      "iraq_alternative": "بدائل مقترحة في العراق أو الوطن العربي (إن وجدت)",
+      "safety_rating": "تقييم السلامة (مثلاً: آمن، استشر طبيب، خطر للحوامل)"
+    }
+    تأكد من أن النتيجة JSON صالح فقط باللغتين العربية والإنجليزية.
+    أضف دائماً تنبيهاً طبياً (Disclaimer) في النهاية.`;
+
+  const imageData = image.split(",")[1];
+  const result = await model.generateContent([
+    prompt,
+    {
+      inlineData: {
+        data: imageData,
+        mimeType: "image/jpeg"
+      }
+    }
+  ]);
+
+  const text = result.response.text();
+  // Clear potential markdown blocks
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("فشل الذكاء الاصطناعي في تنسيق النتيجة. حاول مرة أخرى.");
+  
+  return JSON.parse(jsonMatch[0]);
+}
 
 // Setup Supabase Backend Client to Verify Tokens
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://wgndikqowpwamfykxqul.supabase.co";

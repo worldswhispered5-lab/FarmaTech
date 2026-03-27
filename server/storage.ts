@@ -29,15 +29,11 @@ export interface IStorage {
   getHistory(userId: string): Promise<HistoryEntry[]>;
   getHistoryByHash(userId: string, hash: string): Promise<HistoryEntry | undefined>;
   getGlobalHistoryByHash(hash: string): Promise<HistoryEntry | undefined>;
+  getNearbyHistory(embedding: number[]): Promise<HistoryEntry | undefined>;
   cleanupOldHistory(userId: string): Promise<void>;
-  createHistory(entry: InsertHistoryEntry & { userId: string }): Promise<HistoryEntry>;
-  updateHistory(id: string, updates: Partial<InsertHistoryEntry>): Promise<HistoryEntry>;
+  createHistory(entry: InsertHistoryEntry & { userId: string, embedding?: number[] | null }): Promise<HistoryEntry>;
+  updateHistory(id: string, updates: Partial<InsertHistoryEntry> & { embedding?: number[] | null }): Promise<HistoryEntry>;
   deleteHistory(id: string): Promise<void>;
-
-
-  // Subscription Methods
-  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
-  getSubscriptions(userId: string): Promise<Subscription[]>;
 }
 
 export class SupabaseStorage implements IStorage {
@@ -81,7 +77,6 @@ export class SupabaseStorage implements IStorage {
     const normalized = cleanQuery.replace(/[- ]/g, '');
     
     // Text search fallback (search by name or scientific name)
-    // We try to match the exact query or a version with wildcards
     const { data, error } = await supabase
       .from('products')
       .select()
@@ -105,12 +100,11 @@ export class SupabaseStorage implements IStorage {
     if (error) throw error;
     if (!data) return undefined;
 
-    // Map snake_case from DB back to camelCase for the frontend
     return {
       id: data.id,
       email: data.email,
       credits: data.credits,
-      maxCredits: data.max_credits, // Map snake_case to camelCase
+      maxCredits: data.max_credits,
       subscriptionTier: data.subscription_tier,
       subscriptionExpiresAt: data.subscription_expires_at,
       stripeCustomerId: data.stripe_customer_id,
@@ -147,7 +141,6 @@ export class SupabaseStorage implements IStorage {
         stripeCustomerId: data.stripe_customer_id,
       };
     } else {
-      // Create new profile with the updates
       const { data, error } = await supabase
         .from('profiles')
         .insert({ 
@@ -191,6 +184,7 @@ export class SupabaseStorage implements IStorage {
       content: item.content,
       image: item.image,
       imageHash: item.image_hash,
+      embedding: item.embedding,
       createdAt: item.created_at
     }));
   }
@@ -213,6 +207,7 @@ export class SupabaseStorage implements IStorage {
       content: data.content,
       image: data.image,
       imageHash: data.image_hash,
+      embedding: data.embedding,
       createdAt: data.created_at
     };
   }
@@ -235,7 +230,31 @@ export class SupabaseStorage implements IStorage {
       content: data.content,
       image: data.image,
       imageHash: data.image_hash,
+      embedding: data.embedding,
       createdAt: data.created_at
+    };
+  }
+
+  async getNearbyHistory(embedding: number[]): Promise<HistoryEntry | undefined> {
+    const { data, error } = await supabase.rpc('match_history', {
+      query_embedding: embedding,
+      match_threshold: 0.9, // 90% visual similarity
+      match_count: 1
+    });
+
+    if (error || !data || data.length === 0) return undefined;
+    
+    const item = data[0];
+    return {
+      id: item.id,
+      userId: item.user_id,
+      title: item.title,
+      type: item.type,
+      content: item.content,
+      image: item.image,
+      imageHash: item.image_hash,
+      embedding: item.embedding,
+      createdAt: item.created_at
     };
   }
 
@@ -250,12 +269,10 @@ export class SupabaseStorage implements IStorage {
       .eq('user_id', userId)
       .lt('created_at', isoString);
     
-    if (error) {
-      console.error("[Storage Error] cleanupOldHistory failed:", error);
-    }
+    if (error) console.error("[Storage Error] cleanupOldHistory failed:", error);
   }
 
-  async createHistory(entry: InsertHistoryEntry & { userId: string }): Promise<HistoryEntry> {
+  async createHistory(entry: InsertHistoryEntry & { userId: string, embedding?: number[] | null }): Promise<HistoryEntry> {
     const { data, error } = await supabase
       .from('history')
       .insert({
@@ -265,6 +282,7 @@ export class SupabaseStorage implements IStorage {
         content: entry.content,
         image: entry.image,
         image_hash: entry.imageHash,
+        embedding: entry.embedding,
       })
       .select('*')
       .single();
@@ -282,14 +300,19 @@ export class SupabaseStorage implements IStorage {
       content: data.content,
       image: data.image,
       imageHash: data.image_hash,
+      embedding: data.embedding,
       createdAt: data.created_at
     };
   }
 
-  async updateHistory(id: string, updates: Partial<InsertHistoryEntry>): Promise<HistoryEntry> {
+  async updateHistory(id: string, updates: Partial<InsertHistoryEntry> & { embedding?: number[] | null }): Promise<HistoryEntry> {
     const { data, error } = await supabase
       .from('history')
-      .update(updates)
+      .update({
+        ...updates,
+        image_hash: updates.imageHash,
+        embedding: updates.embedding
+      })
       .eq('id', id)
       .select('*')
       .single();
@@ -307,6 +330,7 @@ export class SupabaseStorage implements IStorage {
       content: data.content,
       image: data.image,
       imageHash: data.image_hash,
+      embedding: data.embedding,
       createdAt: data.created_at
     };
   }
@@ -316,11 +340,7 @@ export class SupabaseStorage implements IStorage {
       .from('history')
       .delete()
       .eq('id', id);
-    
-    if (error) {
-      console.error("[Storage Error] deleteHistory failed:", error);
-      throw error;
-    }
+    if (error) throw error;
   }
 
   async createSubscription(sub: InsertSubscription): Promise<Subscription> {
