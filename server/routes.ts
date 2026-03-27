@@ -10,6 +10,36 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const upload = multer({ storage: multer.memoryStorage() });
 
 // AI Intelligence: Analyze Image (The heart of FarmaTech AI)
+async function generateImageEmbedding(image: string): Promise<number[] | null> {
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const embedModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    
+    // 1. Generate a compact "Visual Signature" of the image
+    // This reduces the image into a descriptive string that is stable across angles
+    const imageData = image.split(",")[1];
+    const result = await model.generateContent([
+      "Briefly describe only the unique identifying marks, brand name, and color of this medicine packaging in 10 words or less.",
+      {
+        inlineData: {
+          data: imageData,
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
+    
+    const signature = result.response.text().trim();
+    console.log(`[Visual Search] Signature: ${signature}`);
+
+    // 2. Convert the signature into a vector embedding
+    const embedResult = await embedModel.embedContent(signature);
+    return Array.from(embedResult.embedding.values);
+  } catch (error) {
+    console.error("[AI Error] Embedding generation failed:", error);
+    return null;
+  }
+}
 async function analyzeImage(image: string, type: string) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
