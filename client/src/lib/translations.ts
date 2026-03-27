@@ -298,7 +298,7 @@ export const translations = {
     cancel: "Cancel",
     supportTitle: "Contact Tech Support",
     heroBadge: "Next Generation of Pharmacy Tech",
-    heroTitle: "AI Solution.for a New Pharma Era.",
+    heroTitle: "AI Solution.For A Pharmacist Age.",
     heroSubtitle: "The first site designed specifically for pharmacies in Iraq",
     heroDescription: "Superpowers and a simple interface. Get comprehensive drug analysis, interactions, and dosages at the touch of a button. Designed specifically to enhance your practice.",
     tosPrivacy: "By continuing, you agree to the Terms of Use and Privacy Policy of FarmaTech platform.",
@@ -316,7 +316,7 @@ export const translations = {
     points: "Tokens",
 
     // About Page
-    aboutHeroTitle: "AI Solution.for a New Pharma Era.",
+    aboutHeroTitle: "AI Solution.For A Pharmacist Age.",
     aboutHeroSubtitle: "The first site designed specifically for pharmacies in Iraq",
     aboutWhoWeAre: "At FarmaTech AI, we don't just provide technology; we create tools that redefine digital pharmacy in Iraq. Our vision started from field reality, to bridge the gap between massive information flow and the pharmacist's critical time.",
     aboutTeam: "We are a team combining advanced software engineering in Generative AI (GenAI) with the clinical expertise of practicing pharmacists. This mix enabled us to create an AI engine that is not just a data collector, but a full integrated 'medical' system.",

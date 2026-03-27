@@ -879,7 +879,7 @@ export default function Home() {
           ? "لطالما كان البحث في المراجع الورقية يستهلك وقتي أثناء ازدحام الصيدلية، لكن FarmaTech AI اختصر المسافة بضغطة زر. دقة النظام في كشف تداخلات الأدوية المعقدة منحتني طمأنينة كاملة عند صرف الوصفات المزمنة."
           : "Paper references used to consume my time during pharmacy rushes, but FarmaTech AI bridged the gap with a button click. The system's accuracy in detecting complex drug interactions gave me peace of mind when dispensing chronic prescriptions.",
         author: lang === 'ar' ? "د. لؤي الراوي" : "Dr. Louay Al-Rawi",
-        role: lang === 'ar' ? "صيدلي ممارسة" : "Advanced Practice Pharmacist",
+        role: lang === 'ar' ? "صيدلي ممارس" : "Practicing Pharmacist",
         avatar: "L",
         color: "bg-[#34d399]"
       },
