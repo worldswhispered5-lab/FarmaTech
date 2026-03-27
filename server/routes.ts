@@ -175,16 +175,16 @@ export function registerRoutes(app: Express): Server {
         });
       } else {
         // Update fingerprint if missing
-        if (fingerprint && !profile.fingerprint) {
+        if (profile && fingerprint && !profile.fingerprint) {
           profile = await storage.updateProfile(user.id, { fingerprint }).catch(e => profile);
         }
 
         // Global Credit Policy Enforcement
-        if (profile.subscriptionTier === 'free' && ((profile.maxCredits ?? 0) > 10 || (profile.credits ?? 0) > 10)) {
+        if (profile && profile.subscriptionTier === 'free' && ((profile.maxCredits ?? 0) > 10 || (profile.credits ?? 0) > 10)) {
           console.log(`[FarmaTech v10.8-ultimate] Enforcing 10-token limit for ${user.id}`);
           profile = await storage.updateProfile(user.id, {
             maxCredits: 10,
-            credits: Math.min(profile.credits ?? 0, 10)
+            credits: Math.min((profile as any).credits ?? 0, 10)
           }).catch(e => profile);
         }
       }
