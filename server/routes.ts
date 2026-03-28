@@ -471,7 +471,7 @@ export function registerRoutes(app: Express): Server {
 
       const isMedicineScan = promptText && (promptText.includes("تعرف على هذا الدواء") || promptText.includes("Identify this medicine") || promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
       const isLabAnalysis = promptText && (promptText.includes("نتائج هذا التقرير المختبري") || promptText.includes("laboratory report") || promptText.includes("التقرير المختبري"));
-      const isAlternative = promptText && (promptText.includes("البحث عن بديل") || promptText.includes("Find alternative"));
+      const isAlternative = promptText && (promptText.includes("البحث عن بديل") || promptText.includes("Find alternative") || promptText.includes("Find a drug alternative"));
       const isPrescription = !isAlternative && !isMedicineScan && !isLabAnalysis && req.file && !promptText?.includes("احسب الجرعة لـ") && !promptText?.includes("التفاعلات الدوائية لـ");
       const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
       const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
@@ -577,6 +577,7 @@ export function registerRoutes(app: Express): Server {
           2. Identify the medicine.
           3. List 3 excellent alternatives with their Generic Name, Brand Name, and Active Ingredients.
           4. Mention the manufacturing company for each if possible.
+          Barcode Note: If the image is just a barcode without a readable drug name, politely ask the user to capture the front of the packaging or type the drug name.
           STRICT RULE: Do NOT under any circumstances mention or suggest the price or monetary cost of any medicine.`;
         } else {
           systemInstruction = "Expert Pharmacist in Iraq. Provide professional pharmaceutical consultation based on the user request. Be helpful, detailed, and accurate.";
