@@ -847,6 +847,11 @@ export default function Home() {
         title: t('smartAdvice'),
         desc: lang === 'ar' ? "إجابات فورية لأي استفسار دوائي" : "Instant answers for any medication inquiry",
       },
+      {
+        icon: <Search className="w-6 h-6 text-emerald-400" />,
+        title: t('findAlternative'),
+        desc: lang === 'ar' ? "بحث ذكي عن بدائل الأدوية العلمية والتجارية" : "Smart search for commercial and scientific drug alternatives",
+      },
     ];
 
     const plans = [
