@@ -471,11 +471,11 @@ export function registerRoutes(app: Express): Server {
 
       const isMedicineScan = promptText && (promptText.includes("تعرف على هذا الدواء") || promptText.includes("Identify this medicine") || promptText.includes("قم بمسح هذه الععلبة") || promptText.includes("Please scan this package"));
       const isLabAnalysis = promptText && (promptText.includes("نتائج هذا التقرير المختبري") || promptText.includes("laboratory report") || promptText.includes("التقرير المختبري"));
-      const isPrescription = !isMedicineScan && !isLabAnalysis && req.file && !promptText?.includes("احسب الجرعة لـ") && !promptText?.includes("التفاعلات الدوائية لـ");
+      const isAlternative = promptText && (promptText.includes("البحث عن بديل") || promptText.includes("Find alternative"));
+      const isPrescription = !isAlternative && !isMedicineScan && !isLabAnalysis && req.file && !promptText?.includes("احسب الجرعة لـ") && !promptText?.includes("التفاعلات الدوائية لـ");
       const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
       const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
       const isSymptoms = promptText && (promptText.includes("أشعر بـ") || promptText.includes("I feel"));
-      const isAlternative = promptText && (promptText.includes("البحث عن بديل") || promptText.includes("Find alternative"));
 
       const currentReqType = isAlternative ? "alternative" : (isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat"))))));
 
