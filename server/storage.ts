@@ -187,98 +187,105 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
+  private readonly allHistoryTables = [
+    'prescription_history', 'lab_history', 'barcode_history', 
+    'dose_calculation_history', 'interaction_history', 'cosmetic_history', 
+    'ai_medical_advice_history'
+  ];
+
+  private getHistoryTable(type?: string | null): string {
+    const map: Record<string, string> = {
+      prescription: 'prescription_history',
+      lab: 'lab_history',
+      medicine: 'barcode_history',
+      calculation: 'dose_calculation_history',
+      interaction: 'interaction_history',
+      cosmetic: 'cosmetic_history',
+    };
+    return type && map[type] ? map[type] : 'ai_medical_advice_history';
+  }
+
   async getHistory(userId: string): Promise<HistoryEntry[]> {
-    const { data, error } = await supabase
-      .from('history')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
+    try {
+      const results = await Promise.all(
+        this.allHistoryTables.map(table => 
+          supabase
+            .from(table)
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50)
+        )
+      );
+
+      const allData: any[] = [];
+      results.forEach(res => {
+        if (res.data) allData.push(...res.data);
+      });
+
+      // Sort globally
+      allData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      return allData.map(item => ({
+        id: item.id,
+        userId: item.user_id,
+        title: item.title,
+        type: item.type,
+        content: item.content,
+        image: item.image,
+        imageHash: item.image_hash,
+        embedding: item.embedding,
+        createdAt: item.created_at
+      }));
+    } catch (error) {
       console.error("[Storage Error] getHistory failed:", error);
       return [];
     }
-    
-    return data.map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      title: item.title,
-      type: item.type,
-      content: item.content,
-      image: item.image,
-      imageHash: item.image_hash,
-      embedding: item.embedding,
-      createdAt: item.created_at
-    }));
   }
 
   async getHistoryByHash(userId: string, hash: string): Promise<HistoryEntry | undefined> {
-    const { data, error } = await supabase
-      .from('history')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('image_hash', hash)
-      .maybeSingle();
-    
-    if (error || !data) return undefined;
-    
-    return {
-      id: data.id,
-      userId: data.user_id,
-      title: data.title,
-      type: data.type,
-      content: data.content,
-      image: data.image,
-      imageHash: data.image_hash,
-      embedding: data.embedding,
-      createdAt: data.created_at
-    };
+    for (const table of this.allHistoryTables) {
+      const { data } = await supabase
+        .from(table)
+        .select('*')
+        .eq('user_id', userId)
+        .eq('image_hash', hash)
+        .maybeSingle();
+      
+      if (data) {
+        return {
+          id: data.id, userId: data.user_id, title: data.title, type: data.type,
+          content: data.content, image: data.image, imageHash: data.image_hash,
+          embedding: data.embedding, createdAt: data.created_at
+        };
+      }
+    }
+    return undefined;
   }
 
   async getGlobalHistoryByHash(hash: string): Promise<HistoryEntry | undefined> {
-    const { data, error } = await supabase
-      .from('history')
-      .select('*')
-      .eq('image_hash', hash)
-      .limit(1)
-      .maybeSingle();
-    
-    if (error || !data) return undefined;
-    
-    return {
-      id: data.id,
-      userId: data.user_id,
-      title: data.title,
-      type: data.type,
-      content: data.content,
-      image: data.image,
-      imageHash: data.image_hash,
-      embedding: data.embedding,
-      createdAt: data.created_at
-    };
+    for (const table of this.allHistoryTables) {
+      const { data } = await supabase
+        .from(table)
+        .select('*')
+        .eq('image_hash', hash)
+        .limit(1)
+        .maybeSingle();
+      
+      if (data) {
+        return {
+          id: data.id, userId: data.user_id, title: data.title, type: data.type,
+          content: data.content, image: data.image, imageHash: data.image_hash,
+          embedding: data.embedding, createdAt: data.created_at
+        };
+      }
+    }
+    return undefined;
   }
 
   async getNearbyHistory(embedding: number[]): Promise<HistoryEntry | undefined> {
-    const { data, error } = await supabase.rpc('match_history', {
-      query_embedding: embedding,
-      match_threshold: 0.9, // 90% visual similarity
-      match_count: 1
-    });
-
-    if (error || !data || data.length === 0) return undefined;
-    
-    const item = data[0];
-    return {
-      id: item.id,
-      userId: item.user_id,
-      title: item.title,
-      type: item.type,
-      content: item.content,
-      image: item.image,
-      imageHash: item.image_hash,
-      embedding: item.embedding,
-      createdAt: item.created_at
-    };
+    // Vector search relies on specific tables, disabled dynamically across 7 tables for now.
+    return undefined;
   }
 
   async cleanupOldHistory(userId: string): Promise<void> {
@@ -286,18 +293,15 @@ export class SupabaseStorage implements IStorage {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const isoString = thirtyDaysAgo.toISOString();
 
-    const { error } = await supabase
-      .from('history')
-      .delete()
-      .eq('user_id', userId)
-      .lt('created_at', isoString);
-    
-    if (error) console.error("[Storage Error] cleanupOldHistory failed:", error);
+    await Promise.all(this.allHistoryTables.map(table => 
+      supabase.from(table).delete().eq('user_id', userId).lt('created_at', isoString)
+    )).catch(err => console.error("[Storage Error] cleanupOldHistory failed:", err));
   }
 
   async createHistory(entry: InsertHistoryEntry & { userId: string, embedding?: number[] | null }): Promise<HistoryEntry> {
+    const targetTable = this.getHistoryTable(entry.type);
     const { data, error } = await supabase
-      .from('history')
+      .from(targetTable)
       .insert({
         user_id: entry.userId,
         title: entry.title,
@@ -311,59 +315,48 @@ export class SupabaseStorage implements IStorage {
       .single();
     
     if (error) {
-      console.error("[Storage Error] createHistory failed:", error);
+      console.error(`[Storage Error] createHistory on ${targetTable} failed:`, error);
       throw error;
     }
     
     return {
-      id: data.id,
-      userId: data.user_id,
-      title: data.title,
-      type: data.type,
-      content: data.content,
-      image: data.image,
-      imageHash: data.image_hash,
-      embedding: data.embedding,
-      createdAt: data.created_at
+      id: data.id, userId: data.user_id, title: data.title, type: data.type,
+      content: data.content, image: data.image, imageHash: data.image_hash,
+      embedding: data.embedding, createdAt: data.created_at
     };
   }
 
   async updateHistory(id: string, updates: Partial<InsertHistoryEntry> & { embedding?: number[] | null }): Promise<HistoryEntry> {
-    const { data, error } = await supabase
-      .from('history')
-      .update({
-        ...updates,
-        image_hash: updates.imageHash,
-        embedding: updates.embedding
-      })
-      .eq('id', id)
-      .select('*')
-      .single();
+    // We try to use the type if provided, else we update across all
+    const targetTables = updates.type ? [this.getHistoryTable(updates.type)] : this.allHistoryTables;
     
-    if (error) {
-      console.error("[Storage Error] updateHistory failed:", error);
-      throw error;
+    for (const table of targetTables) {
+      const { data, error } = await supabase
+        .from(table)
+        .update({
+          ...updates,
+          image_hash: updates.imageHash,
+          embedding: updates.embedding
+        })
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
+
+      if (data) {
+        return {
+          id: data.id, userId: data.user_id, title: data.title, type: data.type,
+          content: data.content, image: data.image, imageHash: data.image_hash,
+          embedding: data.embedding, createdAt: data.created_at
+        };
+      }
     }
-    
-    return {
-      id: data.id,
-      userId: data.user_id,
-      title: data.title,
-      type: data.type,
-      content: data.content,
-      image: data.image,
-      imageHash: data.image_hash,
-      embedding: data.embedding,
-      createdAt: data.created_at
-    };
+    throw new Error("History entry not found for update");
   }
 
   async deleteHistory(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('history')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+    await Promise.all(this.allHistoryTables.map(table => 
+      supabase.from(table).delete().eq('id', id)
+    ));
   }
 
   async createSubscription(sub: InsertSubscription): Promise<Subscription> {

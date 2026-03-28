@@ -41,7 +41,7 @@ export const profiles = pgTable("profiles", {
   fingerprint: text("fingerprint"),
 });
 
-export const history = pgTable("history", {
+const historyColumns = {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   title: text("title"),
@@ -51,7 +51,15 @@ export const history = pgTable("history", {
   imageHash: text("image_hash"),
   embedding: vector("embedding", { dimensions: 768 }),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+};
+
+export const aiMedicalAdviceHistory = pgTable("ai_medical_advice_history", historyColumns);
+export const barcodeHistory = pgTable("barcode_history", historyColumns);
+export const cosmeticHistory = pgTable("cosmetic_history", historyColumns);
+export const doseCalculationHistory = pgTable("dose_calculation_history", historyColumns);
+export const interactionHistory = pgTable("interaction_history", historyColumns);
+export const labHistory = pgTable("lab_history", historyColumns);
+export const prescriptionHistory = pgTable("prescription_history", historyColumns);
 
 export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -83,13 +91,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export const insertHistorySchema = createInsertSchema(history).omit({
+export const insertHistorySchema = createInsertSchema(aiMedicalAdviceHistory).omit({
   id: true,
   createdAt: true,
   embedding: true,
 });
 
-export type HistoryEntry = typeof history.$inferSelect;
+export type HistoryEntry = typeof aiMedicalAdviceHistory.$inferSelect;
 export type InsertHistoryEntry = z.infer<typeof insertHistorySchema>;
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
