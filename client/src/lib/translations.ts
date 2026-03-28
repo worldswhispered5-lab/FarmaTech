@@ -81,6 +81,11 @@ export const translations = {
     clinicalNotesPlaceholder: "مثال: مرض مزمن، وراثي، أو سليم...",
     proceedToUpload: "الانتقال لتحميل الصورة",
     comingSoon: "قريباً",
+    findAlternative: "البحث عن بديل دوائي",
+    alternativeNamePlaceholder: "اكتب اسم الدواء المعني هنا...",
+    searchByText: "ابحث عن البدائل 🚀",
+    searchByCamera: "التقاط صورة للعلبة",
+    searchByGallery: "اختيار صورة للعلبة",
 
     // About Page
     aboutHeroTitle: "الذكاء الاصطناعي.بمفهوم صيدلاني جديد.",
@@ -492,5 +497,10 @@ export const translations = {
     clinicalNotesPlaceholder: "Example: Chronic disease, genetic, or healthy...",
     proceedToUpload: "Proceed to Upload",
     comingSoon: "Coming Soon",
+    findAlternative: "Find Drug Alternative",
+    alternativeNamePlaceholder: "Type drug name here...",
+    searchByText: "Search Alternatives 🚀",
+    searchByCamera: "Capture Package",
+    searchByGallery: "Gallery Upload",
   }
 };

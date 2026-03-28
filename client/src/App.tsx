@@ -113,7 +113,9 @@ export default function Home() {
       clinicalNotes: ""
     });
   };
-  const [menuType, setMenuType] = useState<"prescription" | "medicine" | "lab">("prescription");
+  const [menuType, setMenuType] = useState<"prescription" | "medicine" | "lab" | "alternative">("prescription");
+  const [showAlternativeModal, setShowAlternativeModal] = useState(false);
+  const [alternativeText, setAlternativeText] = useState("");
   const [showLabForm, setShowLabForm] = useState(false);
   const [labPatientData, setLabPatientData] = useState({
     age: "",
@@ -466,6 +468,7 @@ export default function Home() {
   const handleAction = async (
     type: "image" | "text" | "calc",
     payload?: any,
+    customPrompt?: string
   ) => {
     setIsLoading(true);
     // Safety timeout: auto-stop loading after 15 seconds to prevent getting stuck
@@ -473,6 +476,7 @@ export default function Home() {
 
     setShowMenu(false);
     setShowCalc(false);
+    setShowAlternativeModal(false);
     setResult("");
     const formData = new FormData();
     formData.append("lang", lang);
@@ -497,7 +501,12 @@ export default function Home() {
       });
       setCurrentAnalysisImage(displayImage);
 
-      if (menuType === "medicine") {
+      if (menuType === "alternative") {
+        const altPrompt = customPrompt || (lang === 'ar'
+          ? "البحث عن بديل دوائي لهذه الصورة."
+          : "Find a drug alternative for this image.");
+        formData.append("prompt", altPrompt);
+      } else if (menuType === "medicine") {
         const medicinePrompt = lang === 'ar'
           ? "تعرف على هذا الدواء من صورته وقدم معلوماته الصيدلانية (الاسم والفاعلية والاستخدام) مع استخراج الباركود أو السيريال إن وجدا بوضوح."
           : "Identify this medicine from its image and provide its pharmaceutical information (Name, active ingredients, and usage) along with extracting the Barcode or Serial number if clearly visible.";
@@ -511,7 +520,7 @@ export default function Home() {
           : `${patientContext}\nAnalyze the results of this laboratory report. Extract each test with its result, unit, and reference range. Indicate if the results are normal or out of range considering the patient's age and gender. Provide a simplified explanation for each test and its clinical significance given the patient's data, along with appropriate pharmaceutical recommendations.`;
         formData.append("prompt", labPrompt);
       } else {
-        formData.append("prompt", chatInput || (lang === 'ar' ? "حلل هذه الصورة واستخرج كافة البيانات الطبية منها بدقة." : "Analyze this image and extract all medical data accurately."));
+        formData.append("prompt", customPrompt || chatInput || (lang === 'ar' ? "حلل هذه الصورة واستخرج كافة البيانات الطبية منها بدقة." : "Analyze this image and extract all medical data accurately."));
       }
     } else if (type === "calc") {
       formData.append(
@@ -519,7 +528,7 @@ export default function Home() {
         `احسب الجرعة لـ: ${calcData.drug}، الوزن: ${calcData.weight} كجم، العمر: ${calcData.age}`
       );
     } else {
-      formData.append("prompt", chatInput);
+      formData.append("prompt", customPrompt || chatInput);
     }
 
     if (type === "text") {
@@ -1939,7 +1948,7 @@ export default function Home() {
             <div className={`absolute -inset-1 blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem] ${theme === 'dark' ? 'bg-teal-500' : 'bg-teal-300'}`}></div>
             <div className={`relative flex items-center p-2 rounded-[2rem] border shadow-2xl transition-all duration-500 ${theme === 'dark' ? 'bg-[#151c28] border-slate-700' : 'bg-white border-slate-100'}`}>
               <button
-                onClick={() => { resetAnalysis(); setMenuType("prescription"); setShowMenu(true); }}
+                onClick={() => { resetAnalysis(); setMenuType("alternative"); setShowAlternativeModal(true); }}
                 className={`p-3 rounded-full transition-all active:scale-90 ${theme === 'dark' ? 'text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100'}`}
               >
                 <Plus className="w-6 h-6" />
@@ -2019,6 +2028,89 @@ export default function Home() {
                   }
                 />
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAlternativeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowAlternativeModal(false)}>
+          <div className={`w-full max-w-sm rounded-[2.5rem] p-8 space-y-6 animate-in zoom-in-95 duration-300 border ${theme === 'dark' ? 'bg-[#151c28] border-slate-700 shadow-black' : 'bg-white border-slate-100 shadow-2xl'}`} onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center bg-teal-500/10 p-4 -mt-4 -mx-4 rounded-t-[2.5rem] mb-4">
+              <h3 className={`font-black text-xl flex items-center gap-2 ${theme === 'dark' ? 'text-teal-400' : 'text-teal-800'}`}>
+                <Search className="w-6 h-6" />
+                {t('findAlternative')}
+              </h3>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowAlternativeModal(false)}>
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <Input
+                  placeholder={t('alternativeNamePlaceholder')}
+                  className={`h-14 focus-visible:ring-teal-500 text-right rounded-2xl font-medium pr-10 ${theme === 'dark' ? 'bg-[#0a0f16] border-slate-700 text-white placeholder:text-slate-600' : 'bg-slate-50 border-slate-200'}`}
+                  value={alternativeText}
+                  onChange={(e) => setAlternativeText(e.target.value)}
+                  dir="rtl"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && alternativeText.trim()) {
+                      handleAction("text", null, (lang === 'ar' ? "البحث عن بديل دوائي لـ: " : "Find alternative for: ") + alternativeText);
+                      setAlternativeText("");
+                    }
+                  }}
+                />
+              </div>
+
+              <Button 
+                disabled={!alternativeText.trim()}
+                onClick={() => {
+                  handleAction("text", null, (lang === 'ar' ? "البحث عن بديل دوائي لـ: " : "Find alternative for: ") + alternativeText);
+                  setAlternativeText("");
+                }}
+                className="w-full h-12 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold"
+              >
+                {t('searchByText')}
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <hr className={`flex-1 border-t ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`} />
+                <span className={`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>أو</span>
+                <hr className={`flex-1 border-t ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`} />
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <label
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border cursor-pointer transition-all active:scale-95
+                    ${theme === 'dark' ? 'bg-slate-900 border-slate-700 hover:border-teal-500 text-slate-300 hover:text-teal-400' : 'bg-slate-50 border-slate-200 hover:border-teal-500 text-slate-600 hover:text-teal-600'}`}
+                >
+                  <Camera className="w-6 h-6" />
+                  <span className="font-bold text-sm">{t('searchByCamera')}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handleAction("image", e.target.files[0])}
+                  />
+                </label>
+
+                <label
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border cursor-pointer transition-all active:scale-95
+                    ${theme === 'dark' ? 'bg-slate-900 border-slate-700 hover:border-emerald-500 text-slate-300 hover:text-emerald-400' : 'bg-slate-50 border-slate-200 hover:border-emerald-500 text-slate-600 hover:text-emerald-600'}`}
+                >
+                  <ImageIcon className="w-6 h-6" />
+                  <span className="font-bold text-sm">{t('searchByGallery')}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handleAction("image", e.target.files[0])}
+                  />
+                </label>
+              </div>
+
             </div>
           </div>
         </div>

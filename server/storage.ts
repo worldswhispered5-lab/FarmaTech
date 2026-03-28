@@ -190,7 +190,7 @@ export class SupabaseStorage implements IStorage {
   private readonly allHistoryTables = [
     'prescription_history', 'lab_history', 'barcode_history', 
     'dose_calculation_history', 'interaction_history', 'cosmetic_history', 
-    'ai_medical_advice_history'
+    'ai_medical_advice_history', 'alternative_history'
   ];
 
   private getHistoryTable(type?: string | null): string {
@@ -201,6 +201,7 @@ export class SupabaseStorage implements IStorage {
       calculation: 'dose_calculation_history',
       interaction: 'interaction_history',
       cosmetic: 'cosmetic_history',
+      alternative: 'alternative_history',
     };
     return type && map[type] ? map[type] : 'ai_medical_advice_history';
   }

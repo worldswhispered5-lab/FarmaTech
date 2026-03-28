@@ -60,6 +60,7 @@ export const doseCalculationHistory = pgTable("dose_calculation_history", histor
 export const interactionHistory = pgTable("interaction_history", historyColumns);
 export const labHistory = pgTable("lab_history", historyColumns);
 export const prescriptionHistory = pgTable("prescription_history", historyColumns);
+export const alternativeHistory = pgTable("alternative_history", historyColumns);
 
 export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

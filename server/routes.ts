@@ -475,8 +475,9 @@ export function registerRoutes(app: Express): Server {
       const isDoseCalc = promptText && promptText.includes("احسب الجرعة لـ");
       const isInteractions = promptText && (promptText.includes("التفاعلات الدوائية لـ") || promptText.includes("Drug interactions for"));
       const isSymptoms = promptText && (promptText.includes("أشعر بـ") || promptText.includes("I feel"));
+      const isAlternative = promptText && (promptText.includes("البحث عن بديل") || promptText.includes("Find alternative"));
 
-      const currentReqType = isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat")))));
+      const currentReqType = isAlternative ? "alternative" : (isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat"))))));
 
       // --- GLOBAL DUPLICATE DETECTION (AI CACHING) ---
       let imageHash: string | undefined;
@@ -570,6 +571,13 @@ export function registerRoutes(app: Express): Server {
           5. End with pharmaceutical recommendations and advice.
           STRICT RULE: If this image is a medical prescription (doctor's prescription/handwritten meds) instead of a laboratory report, you MUST respond ONLY with the exact text "PRESCRIPTION_DETECTED".
           NO greetings or introductory filler.`;
+        } else if (isAlternative) {
+          systemInstruction = `You are an expert Clinical Pharmacist. Your task is to find the best available commercial and scientific alternatives for the provided medicine (by text or image).
+          1. Start immediately with the header "### Drug Alternatives".
+          2. Identify the medicine.
+          3. List 3 excellent alternatives with their Generic Name, Brand Name, and Active Ingredients.
+          4. Mention the manufacturing company for each if possible.
+          STRICT RULE: Do NOT under any circumstances mention or suggest the price or monetary cost of any medicine.`;
         } else {
           systemInstruction = "Expert Pharmacist in Iraq. Provide professional pharmaceutical consultation based on the user request. Be helpful, detailed, and accurate.";
         }
@@ -612,8 +620,16 @@ export function registerRoutes(app: Express): Server {
           3. وضح ما إذا كانت النتيجة طبيعية، مرتفعة، أو منخفضة بناءً على بيانات المريض المزودة.
           4. قدم شرحاً مبسطاً للأهمية السريرية لكل نتيجة غير طبيعية.
           5. اختم بتوصيات صيدلانية ونصائح مناسبة للحالة.
-          قاعدة صارمة: إذا كانت هذه الصورة عبارة عن وصفة طبية (روشتة دكتور/أدوية مكتوبة) وليست فحصاً مختبرياً، يجب أن يكون ردك هو الكلمة التالية فقط بدون أي زيادة: PRESCRIPTION_DETECTED
+          قاعدة صارمة: إذا كانت هذه الصورة عبارة وصفة طبية (روشتة دكتور/أدوية مكتوبة) وليست فحصاً مختبرياً، يجب أن يكون ردك هو الكلمة التالية فقط بدون أي زيادة: PRESCRIPTION_DETECTED
           لا تذكر أي مقدمات أو ترحيب في نص الرد (سيتم إضافته تلقائياً).`;
+        } else if (isAlternative) {
+          systemInstruction = `أنت صيدلي خبير في السوق الدوائي. مهمتك هي إيجاد أفضل البدائل التجارية والعلمية للدواء المرفق (كنص أو صورة).
+          يجب أن تكون الإجابة باللغة العربية حصراً.
+          1. استخدم دائماً العنوان الرئيسي "### البدائل الدوائية" في البداية.
+          2. تعرف على الدواء واذكر المادة الفعالة.
+          3. اقترح 3 بدائل ممتازة (تجارية وعلمية) مع توضيح تركيز الجرعة والشركة المصنعة إن أمكن.
+          4. استخدم تنسيق النقاط الواضحة في الرد لتفعيل البطاقات.
+          قاعدة صارمة جداً: يمنع منعاً باتاً ذكر أو اقتراح أي أسعار أو مبالغ مالية للأدوية تحت أي ظرف.`;
         } else {
           systemInstruction = "أنت صيدلي خبير في العراق. يجب أن تكون الإجابة باللغة العربية حصراً. قدم استشارة صيدلانية مهنية مفصلة ودقيقة بناءً على طلب المستخدم.";
         }
@@ -683,8 +699,8 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      let historyTitle = isMedicineScan ? "medicineScan" : (isLabAnalysis ? "labReportAnalysis" : (isPrescription ? "prescriptionAnalysis" : (isDoseCalc ? "doseCalculator" : (isInteractions ? "drugInteractions" : (isSymptoms ? "symptomAnalysis" : "aiAnalysis")))));
-      let historyType = isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat")))));
+      let historyTitle = isAlternative ? "findAlternative" : (isMedicineScan ? "medicineScan" : (isLabAnalysis ? "labReportAnalysis" : (isPrescription ? "prescriptionAnalysis" : (isDoseCalc ? "doseCalculator" : (isInteractions ? "drugInteractions" : (isSymptoms ? "symptomAnalysis" : "aiAnalysis"))))));
+      let historyType = isAlternative ? "alternative" : (isMedicineScan ? "medicine" : (isLabAnalysis ? "lab" : (isPrescription ? "prescription" : (isDoseCalc ? "calculation" : (isInteractions ? "interaction" : (isSymptoms ? "symptoms" : "chat"))))));
 
       const historyIdFromReq = req.body.historyId || null;
       let finalHistoryId;
